@@ -4,28 +4,37 @@ import { HiHeart } from 'react-icons/hi';
 export default function Footer() {
   return (
     <footer
-      className="border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-surface-dark"
       role="contentinfo"
+      style={{
+        borderTop: '1px solid var(--footer-border)',
+        background: 'var(--footer-bg)',
+        color: 'var(--text-secondary)',
+      }}
     >
-      <div className="section-container py-8">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+      <div className="section-container" style={{ padding: '40px 0' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 32 }}>
+
           {/* Brand */}
           <div>
-            <div className="flex items-center gap-2 mb-3">
-              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary-500 to-accent-500 flex items-center justify-center">
-                <span className="text-white font-display font-bold text-xs">IQ</span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
+              <div style={{
+                width: 32, height: 32, borderRadius: 8,
+                background: 'var(--brand-gradient)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center'
+              }}>
+                <span style={{ color: 'white', fontWeight: 700, fontSize: 12 }}>IQ</span>
               </div>
-              <span className="font-display font-bold text-lg gradient-text">ElectionIQ</span>
+              <span className="gradient-text" style={{ fontWeight: 700, fontSize: 18 }}>ElectionIQ</span>
             </div>
-            <p className="text-sm text-slate-500 dark:text-slate-400 max-w-xs">
+            <p style={{ fontSize: 14, color: 'var(--text-muted)', maxWidth: 260, lineHeight: 1.6 }}>
               Your interactive election process assistant. Empowering civic participation through AI-powered education.
             </p>
           </div>
 
           {/* Quick Links */}
           <div>
-            <h3 className="font-semibold text-slate-800 dark:text-slate-200 mb-3">Explore</h3>
-            <ul className="space-y-2">
+            <h3 style={{ fontWeight: 600, color: 'var(--text-primary)', marginBottom: 12, fontSize: 15 }}>Explore</h3>
+            <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: 8 }}>
               {[
                 { to: '/timeline', label: 'Election Timeline' },
                 { to: '/chat', label: 'AI Assistant' },
@@ -35,7 +44,9 @@ export default function Footer() {
                 <li key={to}>
                   <Link
                     to={to}
-                    className="text-sm text-slate-500 dark:text-slate-400 hover:text-primary-600 dark:hover:text-primary-400 transition-colors"
+                    style={{ fontSize: 14, color: 'var(--text-muted)', textDecoration: 'none', transition: 'color 0.2s' }}
+                    onMouseEnter={e => e.target.style.color = 'var(--accent-primary)'}
+                    onMouseLeave={e => e.target.style.color = 'var(--text-muted)'}
                   >
                     {label}
                   </Link>
@@ -46,25 +57,35 @@ export default function Footer() {
 
           {/* Info */}
           <div>
-            <h3 className="font-semibold text-slate-800 dark:text-slate-200 mb-3">About</h3>
-            <p className="text-sm text-slate-500 dark:text-slate-400">
+            <h3 style={{ fontWeight: 600, color: 'var(--text-primary)', marginBottom: 12, fontSize: 15 }}>About</h3>
+            <p style={{ fontSize: 14, color: 'var(--text-muted)', lineHeight: 1.6 }}>
               ElectionIQ provides non-partisan, educational content about the election process. It does not endorse any candidate or party.
             </p>
-            <p className="text-sm text-slate-500 dark:text-slate-400 mt-2">
+            <p style={{ fontSize: 14, color: 'var(--text-muted)', marginTop: 8 }}>
               Powered by Google Cloud AI services.
             </p>
           </div>
         </div>
 
-        <div className="mt-8 pt-6 border-t border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <p className="text-sm text-slate-400 dark:text-slate-500 flex items-center gap-1">
-            © {new Date().getFullYear()} ElectionIQ. Made with <HiHeart className="w-4 h-4 text-red-500 inline" /> for democracy.
+        <div style={{
+          marginTop: 32, paddingTop: 24,
+          borderTop: '1px solid var(--footer-border)',
+          display: 'flex', flexWrap: 'wrap',
+          alignItems: 'center', justifyContent: 'space-between', gap: 16
+        }}>
+          <p style={{ fontSize: 13, color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: 4 }}>
+            © {new Date().getFullYear()} ElectionIQ. Made with{' '}
+            <HiHeart style={{ color: '#ef4444', display: 'inline', width: 14, height: 14 }} />{' '}
+            for democracy.
           </p>
-          <div className="flex items-center gap-4">
-            <span className="text-xs text-slate-400 dark:text-slate-600 px-3 py-1 rounded-full bg-slate-100 dark:bg-slate-800">
-              ☁️ Deployed on Google Cloud Run
-            </span>
-          </div>
+          <span style={{
+            fontSize: 12, color: 'var(--text-muted)',
+            padding: '4px 12px', borderRadius: 999,
+            background: 'var(--bg-elevated)',
+            border: '1px solid var(--border-subtle)'
+          }}>
+            ☁️ Deployed on Google Cloud Run
+          </span>
         </div>
       </div>
     </footer>

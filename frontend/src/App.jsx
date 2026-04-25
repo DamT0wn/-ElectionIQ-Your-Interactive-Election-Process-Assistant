@@ -3,6 +3,8 @@ import { ThemeProvider } from './context/ThemeContext';
 import { AuthProvider } from './context/AuthContext';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
+import FloatingChat from './components/FloatingChat';
+import './components/FloatingChat.css';
 import HomePage from './pages/HomePage';
 import ChatPage from './pages/ChatPage';
 import TimelinePage from './pages/TimelinePage';
@@ -16,7 +18,7 @@ export default function App() {
     <ThemeProvider>
       <AuthProvider>
         <Router>
-          <div className="min-h-screen flex flex-col bg-slate-50 dark:bg-surface-dark transition-colors duration-300">
+          <div className="min-h-screen flex flex-col transition-colors duration-300">
             <Navbar />
             <main id="main-content" className="flex-1">
               <Routes>
@@ -31,6 +33,7 @@ export default function App() {
             </main>
             <Footer />
           </div>
+          <FloatingChat />
         </Router>
       </AuthProvider>
     </ThemeProvider>

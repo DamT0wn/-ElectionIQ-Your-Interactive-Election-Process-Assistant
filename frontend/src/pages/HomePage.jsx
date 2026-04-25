@@ -67,68 +67,45 @@ export default function HomePage() {
       </section>
 
       {/* Features Grid */}
-      <section className="py-20 bg-slate-50 dark:bg-surface-dark">
+      <section style={{ padding: '80px 0', background: 'var(--bg-surface)' }}>
         <div className="section-container">
-          <div className="text-center max-w-2xl mx-auto mb-16">
-            <h2 className="text-3xl font-display font-bold text-slate-900 dark:text-white mb-4">
+          <div style={{ textAlign: 'center', maxWidth: 600, margin: '0 auto 64px' }}>
+            <h2 style={{ fontSize: 'clamp(1.75rem, 3vw, 2.25rem)', fontWeight: 700, color: 'var(--text-primary)', marginBottom: 16 }}>
               Everything you need to be an informed voter
             </h2>
-            <p className="text-slate-600 dark:text-slate-400 text-lg">
+            <p style={{ color: 'var(--text-secondary)', fontSize: '1.1rem' }}>
               Explore our suite of tools designed to guide you through every step of the democratic process.
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 24 }}>
             {[
-              {
-                title: 'AI Chatbot',
-                desc: 'Ask any election-related question and get simple, unbiased answers.',
-                icon: HiOutlineChat,
-                link: '/chat',
-                color: 'bg-blue-500',
-                shadow: 'shadow-blue-500/20'
-              },
-              {
-                title: 'Interactive Timeline',
-                desc: 'Step-by-step visual guide from registration to election day.',
-                icon: HiOutlineCalendar,
-                link: '/timeline',
-                color: 'bg-indigo-500',
-                shadow: 'shadow-indigo-500/20'
-              },
-              {
-                title: 'Polling Places',
-                desc: 'Find nearby polling stations and drop boxes on an interactive map.',
-                icon: HiOutlineMap,
-                link: '/map',
-                color: 'bg-emerald-500',
-                shadow: 'shadow-emerald-500/20'
-              },
-              {
-                title: 'Election Quiz',
-                desc: 'Test your civics knowledge with AI-generated explanations.',
-                icon: HiOutlineAcademicCap,
-                link: '/quiz',
-                color: 'bg-amber-500',
-                shadow: 'shadow-amber-500/20'
-              }
+              { title: 'AI Chatbot', desc: 'Ask any election-related question and get simple, unbiased answers.', icon: HiOutlineChat, link: '/chat', color: '#3b82f6' },
+              { title: 'Interactive Timeline', desc: 'Step-by-step visual guide from registration to election day.', icon: HiOutlineCalendar, link: '/timeline', color: '#6366f1' },
+              { title: 'Polling Places', desc: 'Find nearby polling stations and drop boxes on an interactive map.', icon: HiOutlineMap, link: '/map', color: '#10b981' },
+              { title: 'Election Quiz', desc: 'Test your civics knowledge with AI-generated explanations.', icon: HiOutlineAcademicCap, link: '/quiz', color: '#f59e0b' },
             ].map((feature, idx) => (
               <motion.div
                 key={feature.title}
                 initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true, margin: "-100px" }}
+                viewport={{ once: true, margin: '-100px' }}
                 transition={{ duration: 0.5, delay: idx * 0.1 }}
               >
-                <Link to={feature.link} className="block h-full group">
-                  <div className="glass-card h-full p-6 transition-all duration-300 hover:-translate-y-2 hover:shadow-xl dark:hover:bg-white/10">
-                    <div className={`w-12 h-12 rounded-xl ${feature.color} text-white flex items-center justify-center mb-6 shadow-lg ${feature.shadow} group-hover:scale-110 transition-transform duration-300`}>
-                      <feature.icon className="w-6 h-6" />
+                <Link to={feature.link} style={{ display: 'block', height: '100%', textDecoration: 'none' }}>
+                  <div className="glass-card" style={{ height: '100%', padding: 24 }}>
+                    <div style={{
+                      width: 48, height: 48, borderRadius: 12,
+                      background: feature.color, color: 'white',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      marginBottom: 20, boxShadow: `0 4px 12px ${feature.color}40`
+                    }}>
+                      <feature.icon style={{ width: 24, height: 24 }} />
                     </div>
-                    <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2 group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors">
+                    <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--text-primary)', marginBottom: 8 }}>
                       {feature.title}
                     </h3>
-                    <p className="text-slate-600 dark:text-slate-400">
+                    <p style={{ color: 'var(--text-secondary)', fontSize: 14, lineHeight: 1.6 }}>
                       {feature.desc}
                     </p>
                   </div>
@@ -138,26 +115,26 @@ export default function HomePage() {
           </div>
         </div>
       </section>
-      
+
       {/* CTA Section */}
-      <section className="py-20 bg-white dark:bg-surface-dark-elevated border-t border-slate-200 dark:border-slate-800">
+      <section style={{ padding: '80px 0', background: 'var(--bg-elevated)', borderTop: '1px solid var(--border-subtle)' }}>
         <div className="section-container">
-          <div className="bg-primary-50 dark:bg-primary-900/10 rounded-3xl p-8 md:p-12 text-center border border-primary-100 dark:border-primary-800/50 max-w-4xl mx-auto">
-            <h2 className="text-3xl md:text-4xl font-display font-bold text-slate-900 dark:text-white mb-4">
+          <div style={{
+            background: 'rgba(99,102,241,0.08)',
+            borderRadius: 24, padding: '48px 40px', textAlign: 'center',
+            border: '1px solid var(--border-brand)', maxWidth: 800, margin: '0 auto'
+          }}>
+            <h2 style={{ fontSize: 'clamp(1.75rem, 3vw, 2.25rem)', fontWeight: 700, color: 'var(--text-primary)', marginBottom: 16 }}>
               Ready to take the next step?
             </h2>
-            <p className="text-lg text-slate-600 dark:text-slate-400 mb-8 max-w-2xl mx-auto">
+            <p style={{ fontSize: '1.1rem', color: 'var(--text-secondary)', marginBottom: 32, maxWidth: 500, margin: '0 auto 32px' }}>
               Create an account to track your election progress, save important dates, and keep a history of your AI chats.
             </p>
             {!user && (
-               <button className="btn-primary">
-                 Sign in with Google
-               </button>
+              <button className="btn-primary">Sign in with Google</button>
             )}
             {user && (
-               <Link to="/progress" className="btn-primary">
-                 View Your Progress
-               </Link>
+              <Link to="/progress" className="btn-primary" style={{ textDecoration: 'none' }}>View Your Progress</Link>
             )}
           </div>
         </div>
