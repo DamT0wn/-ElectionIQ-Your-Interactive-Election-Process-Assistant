@@ -1,0 +1,38 @@
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { ThemeProvider } from './context/ThemeContext';
+import { AuthProvider } from './context/AuthContext';
+import Navbar from './components/Navbar';
+import Footer from './components/Footer';
+import HomePage from './pages/HomePage';
+import ChatPage from './pages/ChatPage';
+import TimelinePage from './pages/TimelinePage';
+import MapPage from './pages/MapPage';
+import CalendarPage from './pages/CalendarPage';
+import QuizPage from './pages/QuizPage';
+import ProgressPage from './pages/ProgressPage';
+
+export default function App() {
+  return (
+    <ThemeProvider>
+      <AuthProvider>
+        <Router>
+          <div className="min-h-screen flex flex-col bg-slate-50 dark:bg-surface-dark transition-colors duration-300">
+            <Navbar />
+            <main id="main-content" className="flex-1">
+              <Routes>
+                <Route path="/" element={<HomePage />} />
+                <Route path="/chat" element={<ChatPage />} />
+                <Route path="/timeline" element={<TimelinePage />} />
+                <Route path="/map" element={<MapPage />} />
+                <Route path="/calendar" element={<CalendarPage />} />
+                <Route path="/quiz" element={<QuizPage />} />
+                <Route path="/progress" element={<ProgressPage />} />
+              </Routes>
+            </main>
+            <Footer />
+          </div>
+        </Router>
+      </AuthProvider>
+    </ThemeProvider>
+  );
+}
