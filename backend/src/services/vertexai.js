@@ -1,11 +1,21 @@
 /**
  * Gemini API service — uses Google Generative Language REST API directly.
- * This avoids Vertex AI SDK credential/model availability issues.
+ * Includes automatic model fallback if quota is exceeded.
  */
 
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
-const GEMINI_MODEL = process.env.GEMINI_MODEL || 'gemini-2.0-flash';
-const GEMINI_API_BASE = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}`;
+
+// Model fallback chain — only models confirmed available on this key
+const MODEL_FALLBACK_CHAIN = [
+  process.env.GEMINI_MODEL || 'gemini-2.5-flash',
+  'gemini-2.5-flash',
+  'gemini-2.0-flash',
+  'gemini-2.0-flash-lite',
+  'gemini-flash-latest',
+];
+
+// Deduplicate while preserving order
+const MODELS = [...new Set(MODEL_FALLBACK_CHAIN)];
 
 const SYSTEM_INSTRUCTION = `You are ElectionIQ, a friendly and knowledgeable AI assistant specializing in election processes, voter rights, and civic education.
 Your role is to:
@@ -21,14 +31,14 @@ Your role is to:
 Keep responses concise, warm, and encouraging. Use numbered lists and bullet points for clarity.`;
 
 /**
- * Call Gemini REST API
+ * Call Gemini REST API with a specific model.
  */
-async function callGemini(contents, generationConfig = {}) {
+async function callGeminiModel(model, contents, generationConfig = {}) {
   if (!GEMINI_API_KEY) {
     throw new Error('GEMINI_API_KEY is not set in environment variables.');
   }
 
-  const url = `${GEMINI_API_BASE}:generateContent?key=${GEMINI_API_KEY}`;
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${GEMINI_API_KEY}`;
 
   const body = {
     system_instruction: {
@@ -57,7 +67,10 @@ async function callGemini(contents, generationConfig = {}) {
 
   if (!response.ok) {
     const err = await response.json().catch(() => ({}));
-    throw new Error(`Gemini API error ${response.status}: ${JSON.stringify(err)}`);
+    const error = new Error(`Gemini API error ${response.status}`);
+    error.status = response.status;
+    error.details = err;
+    throw error;
   }
 
   const data = await response.json();
@@ -65,10 +78,37 @@ async function callGemini(contents, generationConfig = {}) {
 }
 
 /**
+ * Call Gemini with automatic model fallback on quota errors (429).
+ */
+async function callGemini(contents, generationConfig = {}) {
+  let lastError;
+
+  for (const model of MODELS) {
+    try {
+      console.log(`[Gemini] Trying model: ${model}`);
+      const text = await callGeminiModel(model, contents, generationConfig);
+      console.log(`[Gemini] Success with model: ${model}`);
+      return text;
+    } catch (err) {
+      lastError = err;
+      if (err.status === 429 || err.status === 404) {
+        console.warn(`[Gemini] ${err.status} for ${model}, trying next model...`);
+        continue; // try next model
+      }
+      // Non-quota error — don't retry
+      throw err;
+    }
+  }
+
+  // All models exhausted
+  console.error('[Gemini] All models quota exceeded.');
+  throw new Error('All Gemini models are currently rate limited. Please try again in a few minutes.');
+}
+
+/**
  * Send a chat message and maintain conversation history.
  */
 async function sendChatMessage(history, userMessage) {
-  // Convert history format: [{role, parts}] — already correct for Gemini
   const contents = [
     ...(history || []),
     { role: 'user', parts: [{ text: userMessage }] },

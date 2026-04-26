@@ -55,7 +55,10 @@ export default function ChatPage() {
       setMessages(response.history);
     } catch (err) {
       console.error(err);
-      setMessages([...newHistory, { role: 'model', parts: [{ text: 'Sorry, I encountered an error. Please try asking again.' }] }]);
+      const errMsg = err.message?.includes('rate limited')
+        ? 'The AI is temporarily rate limited. Please wait a moment and try again.'
+        : 'Sorry, I encountered an error. Please try asking again.';
+      setMessages([...newHistory, { role: 'model', parts: [{ text: errMsg }] }]);
     } finally {
       setIsLoading(false);
     }

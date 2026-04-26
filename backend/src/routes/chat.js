@@ -65,7 +65,12 @@ router.post(
       });
     } catch (err) {
       console.error('Chat error:', err);
-      res.status(500).json({ error: 'Failed to process chat message' });
+      const isQuota = err.message?.includes('rate limited') || err.status === 429;
+      res.status(500).json({
+        error: isQuota
+          ? 'The AI service is temporarily rate limited. Please try again in a minute.'
+          : 'Failed to process chat message',
+      });
     }
   }
 );

@@ -31,7 +31,7 @@ steps:
       - 'managed'
       - '--allow-unauthenticated'
       - '--set-env-vars'
-      - 'NODE_ENV=production,GOOGLE_CLOUD_PROJECT_ID=$PROJECT_ID,VERTEX_AI_LOCATION=us-central1,GEMINI_MODEL=gemini-2.0-flash-lite,GEMINI_API_KEY=AIzaSyA6GJkzUgTpHeq28D3tsQrobeOF_Z_BSqE,CORS_ORIGIN=https://electioniq-frontend-198562073790.us-central1.run.app'
+      - 'NODE_ENV=production,GOOGLE_CLOUD_PROJECT_ID=$PROJECT_ID,VERTEX_AI_LOCATION=us-central1,GEMINI_MODEL=gemini-2.5-flash,GEMINI_API_KEY=AIzaSyDObgDc6VORuswE4rmq7Dan0697b8PGXB0,CORS_ORIGIN=https://electioniq-frontend-198562073790.us-central1.run.app'
     id: 'deploy-backend'
     waitFor: ['push-backend']
 
