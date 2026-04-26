@@ -111,7 +111,7 @@ export default function MapPage() {
     }
   }, [darkMode]);
 
-  // Re-init map if ref is available but instance isn't (e.g. navigating back)
+  // Re-init map if ref is available but instance isn't (e.g. navigating back to this page)
   useEffect(() => {
     if (window.google?.maps && mapRef.current && !mapInstanceRef.current) {
       mapInstanceRef.current = new window.google.maps.Map(mapRef.current, {
@@ -125,7 +125,8 @@ export default function MapPage() {
       });
       setMapReady(true);
     }
-  });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [mapReady]);
 
   const clearMarkers = useCallback(() => {
     markersRef.current.forEach(m => m.setMap(null));
