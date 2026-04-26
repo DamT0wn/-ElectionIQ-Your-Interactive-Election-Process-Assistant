@@ -1,6 +1,5 @@
 import { createContext, useContext, useState, useCallback } from 'react';
 import { sendMessage } from '../services/api';
-import { useAuth } from './AuthContext';
 
 const ChatContext = createContext();
 
@@ -10,12 +9,12 @@ const INITIAL_MESSAGE = {
 };
 
 export function ChatProvider({ children }) {
-  const { user } = useAuth();
   const [messages, setMessages] = useState([INITIAL_MESSAGE]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  const sendChat = useCallback(async (userMessage) => {
+  // user is passed in at call time so ChatContext doesn't depend on AuthContext
+  const sendChat = useCallback(async (userMessage, user = null) => {
     if (!userMessage.trim() || isLoading) return;
 
     setError(null);
@@ -46,7 +45,7 @@ export function ChatProvider({ children }) {
     } finally {
       setIsLoading(false);
     }
-  }, [messages, isLoading, user]);
+  }, [messages, isLoading]);
 
   const clearChat = useCallback(() => {
     setMessages([{

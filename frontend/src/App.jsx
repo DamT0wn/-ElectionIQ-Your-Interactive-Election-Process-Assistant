@@ -15,6 +15,8 @@ import QuizPage from './pages/QuizPage';
 import ProgressPage from './pages/ProgressPage';
 
 export default function App() {
+  console.log('App: Rendering');
+  
   return (
     <ThemeProvider>
       <AuthProvider>
