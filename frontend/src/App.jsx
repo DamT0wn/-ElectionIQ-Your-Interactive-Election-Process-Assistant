@@ -18,8 +18,8 @@ export default function App() {
   return (
     <ThemeProvider>
       <AuthProvider>
-        <ChatProvider>
-          <Router>
+        <Router>
+          <ChatProvider>
             {/* Skip to main content — accessibility */}
             <a
               href="#main-content"
@@ -50,8 +50,8 @@ export default function App() {
               <Footer />
             </div>
             <FloatingChat />
-          </Router>
-        </ChatProvider>
+          </ChatProvider>
+        </Router>
       </AuthProvider>
     </ThemeProvider>
   );
