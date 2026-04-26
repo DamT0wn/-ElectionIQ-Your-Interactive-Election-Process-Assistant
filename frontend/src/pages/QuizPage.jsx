@@ -210,6 +210,8 @@ export default function QuizPage() {
 
                     return (
                       <button key={idx} onClick={() => handleOptionSelect(idx)} disabled={isAnswering}
+                        aria-pressed={selectedOptionIndex === idx}
+                        aria-label={`Option ${idx + 1}: ${opt}${isAnswering ? (idx === question.correctIndex ? ' — Correct answer' : idx === selectedOptionIndex ? ' — Your incorrect answer' : '') : ''}`}
                         style={{
                           width: '100%', textAlign: 'left', padding: '14px 18px', borderRadius: 12,
                           background: bg, border: `2px solid ${border}`, color,

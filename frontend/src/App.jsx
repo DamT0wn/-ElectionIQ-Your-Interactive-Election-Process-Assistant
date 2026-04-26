@@ -18,9 +18,23 @@ export default function App() {
     <ThemeProvider>
       <AuthProvider>
         <Router>
+          {/* Skip to main content — accessibility */}
+          <a
+            href="#main-content"
+            style={{
+              position: 'absolute', top: -40, left: 8, zIndex: 99999,
+              background: 'var(--brand-gradient)', color: 'white',
+              padding: '8px 16px', borderRadius: 8, fontWeight: 600, fontSize: 14,
+              textDecoration: 'none', transition: 'top 0.2s',
+            }}
+            onFocus={e => e.target.style.top = '8px'}
+            onBlur={e => e.target.style.top = '-40px'}
+          >
+            Skip to main content
+          </a>
           <div className="min-h-screen flex flex-col transition-colors duration-300">
             <Navbar />
-            <main id="main-content" className="flex-1">
+            <main id="main-content" className="flex-1" tabIndex={-1}>
               <Routes>
                 <Route path="/" element={<HomePage />} />
                 <Route path="/chat" element={<ChatPage />} />

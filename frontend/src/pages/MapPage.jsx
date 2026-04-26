@@ -54,7 +54,6 @@ export default function MapPage() {
   const mapRef = useRef(null);
   const mapInstanceRef = useRef(null);
   const markersRef = useRef([]);
-
   // Load Google Maps script once
   useEffect(() => {
     if (!GOOGLE_MAPS_API_KEY) {

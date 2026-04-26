@@ -120,17 +120,16 @@ export default function Navbar() {
                   {user.photoURL ? (
                     <img
                       src={user.photoURL}
-                      alt={user.displayName || 'User'}
+                      alt={`${user.displayName || 'User'}'s profile photo`}
                       style={{ width: 28, height: 28, borderRadius: '50%', objectFit: 'cover', border: '2px solid var(--border-brand)' }}
                       referrerPolicy="no-referrer"
                     />
                   ) : (
-                    <div style={{
-                      width: 28, height: 28, borderRadius: '50%',
-                      background: 'var(--brand-gradient)',
-                      display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      color: 'white', fontSize: 12, fontWeight: 700
-                    }}>
+                    <div
+                      style={{ width: 28, height: 28, borderRadius: '50%', background: 'var(--brand-gradient)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontSize: 12, fontWeight: 700 }}
+                      aria-label={`${user.displayName || 'User'} avatar`}
+                      role="img"
+                    >
                       {(user.displayName || user.email || 'U')[0].toUpperCase()}
                     </div>
                   )}
