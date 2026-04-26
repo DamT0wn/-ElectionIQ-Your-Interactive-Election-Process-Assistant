@@ -1,174 +1,239 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { HiOutlineCalendar, HiOutlinePlus } from 'react-icons/hi';
+import { HiOutlineCalendar, HiOutlineCheckCircle, HiOutlineExclamationCircle } from 'react-icons/hi';
 import { getElectionEvents } from '../services/api';
 import { useAuth } from '../context/AuthContext';
+import { GoogleAuthProvider, getAuth, reauthenticateWithPopup } from 'firebase/auth';
 
 export default function CalendarPage() {
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(true);
   const { user, signInWithGoogle } = useAuth();
   const [addingEvent, setAddingEvent] = useState(null);
+  const [addedEvents, setAddedEvents] = useState(new Set());
   const [statusMsg, setStatusMsg] = useState({ text: '', type: '' });
 
   useEffect(() => {
-    async function loadEvents() {
-      try {
-        const data = await getElectionEvents(new Date().getFullYear());
-        setEvents(data.events || []);
-      } catch (err) {
-        console.error('Failed to load events:', err);
-      } finally {
-        setLoading(false);
-      }
-    }
-    loadEvents();
+    getElectionEvents(new Date().getFullYear())
+      .then(data => setEvents(data.events || []))
+      .catch(err => console.error('Failed to load events:', err))
+      .finally(() => setLoading(false));
   }, []);
 
+  const showStatus = (text, type = 'success') => {
+    setStatusMsg({ text, type });
+    setTimeout(() => setStatusMsg({ text: '', type: '' }), 4000);
+  };
+
+  // Get a fresh Google OAuth access token from Firebase
+  const getGoogleAccessToken = async () => {
+    const auth = getAuth();
+    const currentUser = auth.currentUser;
+    if (!currentUser) return null;
+
+    try {
+      // Get the credential with calendar scope
+      const provider = new GoogleAuthProvider();
+      provider.addScope('https://www.googleapis.com/auth/calendar.events');
+      const result = await reauthenticateWithPopup(currentUser, provider);
+      const credential = GoogleAuthProvider.credentialFromResult(result);
+      return credential?.accessToken || null;
+    } catch (err) {
+      console.warn('Could not get calendar access token:', err.code);
+      return null;
+    }
+  };
+
   const addToGoogleCalendar = async (event) => {
+    // Sign in first if not authenticated
     if (!user) {
       try {
         await signInWithGoogle();
-      } catch (err) {
-        setStatusMsg({ text: 'Please sign in to add events to your calendar.', type: 'error' });
+      } catch {
+        showStatus('Please sign in to add events to your calendar.', 'error');
         return;
       }
     }
 
     setAddingEvent(event.id);
-    
-    // In a real implementation, you would use gapi.client.calendar.events.insert here
-    // using the OAuth token from Firebase. For this demo, we'll simulate the API call
-    // or provide a direct link to the Google Calendar web interface if API fails.
-    
+
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      // Fallback method: Open in new tab via URL parameters if we don't have full gapi access
+      // Try direct Google Calendar API insertion using OAuth token
+      const accessToken = await getGoogleAccessToken();
+
+      if (accessToken) {
+        const calendarEvent = {
+          summary: event.title,
+          description: event.description,
+          start: { date: event.date },
+          end: { date: event.endDate || event.date },
+          reminders: {
+            useDefault: false,
+            overrides: [
+              { method: 'email', minutes: 24 * 60 },
+              { method: 'popup', minutes: 60 },
+            ],
+          },
+        };
+
+        const response = await fetch('https://www.googleapis.com/calendar/v3/calendars/primary/events', {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(calendarEvent),
+        });
+
+        if (response.ok) {
+          setAddedEvents(prev => new Set([...prev, event.id]));
+          showStatus(`✅ "${event.title}" added to your Google Calendar!`, 'success');
+          return;
+        }
+      }
+
+      // Fallback: open Google Calendar web UI with pre-filled event
       const startDate = event.date.replace(/-/g, '');
-      const endDate = event.endDate.replace(/-/g, '');
+      const endDate = (event.endDate || event.date).replace(/-/g, '');
       const url = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(event.title)}&dates=${startDate}/${endDate}&details=${encodeURIComponent(event.description)}`;
-      
       window.open(url, '_blank');
-      
-      setStatusMsg({ text: 'Opened event in Google Calendar!', type: 'success' });
+      setAddedEvents(prev => new Set([...prev, event.id]));
+      showStatus(`Opened "${event.title}" in Google Calendar.`, 'success');
+
     } catch (err) {
       console.error(err);
-      setStatusMsg({ text: 'Failed to add event.', type: 'error' });
+      // Final fallback
+      const startDate = event.date.replace(/-/g, '');
+      const endDate = (event.endDate || event.date).replace(/-/g, '');
+      const url = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(event.title)}&dates=${startDate}/${endDate}&details=${encodeURIComponent(event.description)}`;
+      window.open(url, '_blank');
+      showStatus('Opened in Google Calendar.', 'success');
     } finally {
       setAddingEvent(null);
-      setTimeout(() => setStatusMsg({ text: '', type: '' }), 3000);
     }
   };
 
   const formatDate = (dateStr) => {
-    const options = { weekday: 'long', month: 'long', day: 'numeric' };
-    // Add timezone offset to prevent off-by-one day errors
     const date = new Date(dateStr + 'T12:00:00');
-    return date.toLocaleDateString('en-US', options);
+    return date.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
   };
 
   return (
-    <div className="section-container py-12">
-      <div className="max-w-4xl mx-auto">
-        <div className="text-center mb-12">
-          <motion.h1 
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="text-4xl font-display font-bold text-slate-900 dark:text-white mb-4"
-          >
-            Smart Election <span className="gradient-text">Calendar</span>
-          </motion.h1>
-          <motion.p 
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1 }}
-            className="text-lg text-slate-600 dark:text-slate-400"
-          >
-            Never miss an important deadline. Add key election dates directly to your Google Calendar.
-          </motion.p>
+    <div style={{ minHeight: '100vh', paddingBottom: 60 }}>
+      <div style={{ textAlign: 'center', padding: '60px 24px 40px' }}>
+        <motion.h1 initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }}
+          style={{ fontSize: 'clamp(2rem, 4vw, 3rem)', fontWeight: 800, color: 'var(--text-primary)', marginBottom: 12 }}>
+          Smart Election <span className="page-title-gradient">Calendar</span>
+        </motion.h1>
+        <motion.p initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
+          style={{ fontSize: '1.05rem', color: 'var(--text-secondary)' }}>
+          Never miss an important deadline. Add key election dates directly to your Google Calendar.
+        </motion.p>
+      </div>
+
+      {/* Status message */}
+      {statusMsg.text && (
+        <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}
+          style={{
+            maxWidth: 700, margin: '0 auto 24px', padding: '14px 20px', borderRadius: 12,
+            display: 'flex', alignItems: 'center', gap: 10, fontSize: 14, fontWeight: 500,
+            background: statusMsg.type === 'success' ? 'rgba(16,185,129,0.12)' : 'rgba(239,68,68,0.12)',
+            border: `1px solid ${statusMsg.type === 'success' ? 'rgba(16,185,129,0.4)' : 'rgba(239,68,68,0.4)'}`,
+            color: statusMsg.type === 'success' ? '#4ade80' : '#f87171',
+          }}>
+          {statusMsg.type === 'success'
+            ? <HiOutlineCheckCircle style={{ width: 18, height: 18, flexShrink: 0 }} />
+            : <HiOutlineExclamationCircle style={{ width: 18, height: 18, flexShrink: 0 }} />}
+          {statusMsg.text}
+        </motion.div>
+      )}
+
+      {/* Sign-in prompt */}
+      {!user && (
+        <div style={{ maxWidth: 700, margin: '0 auto 24px', padding: '14px 20px', borderRadius: 12, background: 'rgba(99,102,241,0.08)', border: '1px solid var(--border-brand)', fontSize: 14, color: 'var(--text-secondary)', textAlign: 'center' }}>
+          💡 <strong style={{ color: 'var(--accent-primary)' }}>Sign in</strong> to add events directly to your Google Calendar.
         </div>
+      )}
 
-        {statusMsg.text && (
-          <div className={`mb-6 p-4 rounded-xl text-sm font-medium text-center ${
-            statusMsg.type === 'success' ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400' : 'bg-red-50 text-red-700 dark:bg-red-900/30 dark:text-red-400'
-          }`}>
-            {statusMsg.text}
-          </div>
-        )}
-
+      <div style={{ maxWidth: 800, margin: '0 auto', padding: '0 24px' }}>
         {loading ? (
-          <div className="space-y-4">
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
             {[1, 2, 3, 4].map(i => (
-              <div key={i} className="glass-card p-6 flex gap-6 animate-pulse">
-                <div className="w-16 h-16 bg-slate-200 dark:bg-slate-700 rounded-xl shrink-0"></div>
-                <div className="flex-1 space-y-3">
-                  <div className="h-5 bg-slate-200 dark:bg-slate-700 rounded w-1/3"></div>
-                  <div className="h-4 bg-slate-200 dark:bg-slate-700 rounded w-2/3"></div>
+              <div key={i} style={{ background: 'var(--glass-bg)', border: '1px solid var(--glass-border)', borderRadius: 16, padding: 24, display: 'flex', gap: 20, animation: 'pulse 2s infinite' }}>
+                <div style={{ width: 64, height: 64, background: 'var(--bg-elevated)', borderRadius: 12, flexShrink: 0 }} />
+                <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 10 }}>
+                  <div style={{ height: 18, background: 'var(--bg-elevated)', borderRadius: 6, width: '40%' }} />
+                  <div style={{ height: 14, background: 'var(--bg-elevated)', borderRadius: 6, width: '70%' }} />
                 </div>
               </div>
             ))}
           </div>
         ) : (
-          <div className="space-y-4 relative before:absolute before:inset-0 before:ml-8 before:-translate-x-px md:before:mx-auto md:before:translate-x-0 before:h-full before:w-0.5 before:bg-gradient-to-b before:from-transparent before:via-slate-300 dark:before:via-slate-700 before:to-transparent">
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
             {events.map((event, idx) => {
               const dateObj = new Date(event.date + 'T12:00:00');
               const month = dateObj.toLocaleDateString('en-US', { month: 'short' });
               const day = dateObj.getDate();
               const isPast = dateObj < new Date();
+              const isAdded = addedEvents.has(event.id);
 
               return (
-                <motion.div 
-                  key={event.id}
-                  initial={{ opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ delay: idx * 0.1 }}
-                  className="relative flex items-center justify-between md:justify-normal md:odd:flex-row-reverse group is-active"
-                >
-                  {/* Timeline Dot */}
-                  <div className="flex items-center justify-center w-10 h-10 rounded-full border-4 border-slate-50 dark:border-surface-dark bg-white dark:bg-surface-dark-elevated shadow shrink-0 md:order-1 md:group-odd:-translate-x-1/2 md:group-even:translate-x-1/2 ml-3 md:ml-0 z-10">
-                    <div className="w-3 h-3 rounded-full" style={{ backgroundColor: event.color }}></div>
+                <motion.div key={event.id}
+                  initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }} transition={{ delay: idx * 0.06 }}
+                  style={{
+                    background: 'var(--glass-bg)', backdropFilter: 'var(--glass-blur)',
+                    border: `1px solid ${isAdded ? 'rgba(16,185,129,0.4)' : 'var(--glass-border)'}`,
+                    borderRadius: 16, padding: 20,
+                    display: 'flex', gap: 20, alignItems: 'flex-start',
+                    opacity: isPast ? 0.6 : 1,
+                    transition: 'all 0.2s',
+                  }}>
+
+                  {/* Date badge */}
+                  <div style={{
+                    width: 64, height: 64, borderRadius: 12, flexShrink: 0,
+                    display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+                    background: isPast ? 'var(--bg-elevated)' : `${event.color}20`,
+                    border: `2px solid ${isPast ? 'var(--border-subtle)' : event.color}`,
+                  }}>
+                    <span style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: isPast ? 'var(--text-muted)' : event.color }}>{month}</span>
+                    <span style={{ fontSize: 22, fontWeight: 800, lineHeight: 1, color: isPast ? 'var(--text-muted)' : 'var(--text-primary)' }}>{day}</span>
                   </div>
 
-                  {/* Card */}
-                  <div className="w-[calc(100%-4rem)] md:w-[calc(50%-2.5rem)] p-4 rounded-2xl glass-card transition-all hover:shadow-lg group-hover:-translate-y-1">
-                    <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center">
-                      {/* Date Badge */}
-                      <div className={`flex flex-col items-center justify-center w-16 h-16 rounded-xl shrink-0 ${isPast ? 'bg-slate-100 dark:bg-slate-800 text-slate-400' : 'bg-primary-50 dark:bg-primary-900/20 text-primary-700 dark:text-primary-300'}`}>
-                        <span className="text-xs font-bold uppercase tracking-wider">{month}</span>
-                        <span className="text-2xl font-display font-bold leading-none">{day}</span>
-                      </div>
-
-                      <div className="flex-1">
-                        <div className="flex items-center justify-between gap-2 mb-1">
-                          <h3 className={`font-bold text-lg ${isPast ? 'text-slate-500 dark:text-slate-400 line-through decoration-slate-300 dark:decoration-slate-600' : 'text-slate-900 dark:text-white'}`}>
-                            {event.title}
-                          </h3>
-                        </div>
-                        <p className="text-sm text-slate-600 dark:text-slate-400 mb-3">
-                          {event.description}
-                        </p>
-                        <button
-                          onClick={() => addToGoogleCalendar(event)}
-                          disabled={addingEvent === event.id}
-                          className={`inline-flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-lg transition-colors ${
-                            isPast 
-                              ? 'bg-slate-100 text-slate-400 dark:bg-slate-800 cursor-not-allowed' 
-                              : 'bg-primary-100 text-primary-700 hover:bg-primary-200 dark:bg-primary-900/30 dark:text-primary-300 dark:hover:bg-primary-900/50'
-                          }`}
-                        >
-                          {addingEvent === event.id ? (
-                            'Adding...'
-                          ) : (
-                            <>
-                              <HiOutlineCalendar className="w-4 h-4" />
-                              Add to Calendar
-                            </>
-                          )}
-                        </button>
-                      </div>
+                  {/* Content */}
+                  <div style={{ flex: 1 }}>
+                    <h3 style={{
+                      fontSize: '1.05rem', fontWeight: 700, marginBottom: 6,
+                      color: isPast ? 'var(--text-muted)' : 'var(--text-primary)',
+                      textDecoration: isPast ? 'line-through' : 'none',
+                    }}>
+                      {event.title}
+                    </h3>
+                    <p style={{ fontSize: 13, color: 'var(--text-secondary)', marginBottom: 12, lineHeight: 1.5 }}>
+                      {event.description}
+                    </p>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
+                      <button
+                        onClick={() => addToGoogleCalendar(event)}
+                        disabled={addingEvent === event.id || isPast}
+                        style={{
+                          display: 'inline-flex', alignItems: 'center', gap: 6,
+                          fontSize: 13, fontWeight: 600, padding: '7px 14px', borderRadius: 8,
+                          cursor: isPast ? 'not-allowed' : 'pointer', transition: 'all 0.2s',
+                          background: isAdded ? 'rgba(16,185,129,0.15)' : isPast ? 'var(--bg-elevated)' : `${event.color}18`,
+                          border: `1px solid ${isAdded ? 'rgba(16,185,129,0.5)' : isPast ? 'var(--border-subtle)' : `${event.color}50`}`,
+                          color: isAdded ? '#4ade80' : isPast ? 'var(--text-muted)' : event.color,
+                        }}>
+                        {addingEvent === event.id ? (
+                          <><span style={{ width: 14, height: 14, border: '2px solid currentColor', borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 0.6s linear infinite', display: 'inline-block' }} /> Adding...</>
+                        ) : isAdded ? (
+                          <><HiOutlineCheckCircle style={{ width: 16, height: 16 }} /> Added!</>
+                        ) : (
+                          <><HiOutlineCalendar style={{ width: 16, height: 16 }} /> Add to Calendar</>
+                        )}
+                      </button>
+                      <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>{formatDate(event.date)}</span>
                     </div>
                   </div>
                 </motion.div>

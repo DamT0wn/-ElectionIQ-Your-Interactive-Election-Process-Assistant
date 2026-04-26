@@ -4,34 +4,37 @@ import { HiOutlineAcademicCap, HiOutlineLightningBolt, HiOutlineRefresh, HiOutli
 import { getQuizTopics, generateQuizQuestion, explainQuizAnswer, submitQuizResult } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 
+const FALLBACK_TOPICS = [
+  'voter registration',
+  'election day procedures',
+  'types of elections',
+  'electoral college',
+  'ballot measures and propositions',
+  'campaign finance',
+  'voting rights history',
+  'how votes are counted',
+  'absentee and mail-in voting',
+  'primary elections vs general elections',
+];
+
 export default function QuizPage() {
   const { user } = useAuth();
-  const [topics, setTopics] = useState([]);
+  const [topics, setTopics] = useState(FALLBACK_TOPICS);
   const [selectedTopic, setSelectedTopic] = useState('');
   const [difficulty, setDifficulty] = useState('medium');
-  
-  const [gameState, setGameState] = useState('setup'); // setup, playing, result
+  const [gameState, setGameState] = useState('setup');
   const [question, setQuestion] = useState(null);
   const [selectedOptionIndex, setSelectedOptionIndex] = useState(null);
   const [isAnswering, setIsAnswering] = useState(false);
   const [explanation, setExplanation] = useState('');
-  
   const [stats, setStats] = useState({ correct: 0, total: 0 });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
   useEffect(() => {
-    async function loadTopics() {
-      try {
-        const data = await getQuizTopics();
-        setTopics(data.topics || []);
-      } catch (err) {
-        console.error('Failed to load topics:', err);
-        // Use fallback topics if backend unavailable
-        setTopics(['voter registration', 'election process', 'candidates', 'ballot measures', 'electoral college', 'voting rights']);
-      }
-    }
-    loadTopics();
+    getQuizTopics()
+      .then(data => { if (data.topics?.length) setTopics(data.topics); })
+      .catch(() => {}); // silently use fallback
   }, []);
 
   const startQuiz = async () => {
@@ -46,7 +49,6 @@ export default function QuizPage() {
     setExplanation('');
     setSelectedOptionIndex(null);
     setIsAnswering(false);
-
     try {
       const data = await generateQuizQuestion(selectedTopic, difficulty);
       setQuestion(data);
@@ -60,28 +62,16 @@ export default function QuizPage() {
 
   const handleOptionSelect = async (index) => {
     if (isAnswering || !question) return;
-    
     setSelectedOptionIndex(index);
     setIsAnswering(true);
     setLoading(true);
-
     const isCorrect = index === question.correctIndex;
-    setStats(prev => ({ 
-      correct: prev.correct + (isCorrect ? 1 : 0), 
-      total: prev.total + 1 
-    }));
-
+    setStats(prev => ({ correct: prev.correct + (isCorrect ? 1 : 0), total: prev.total + 1 }));
     try {
-      const data = await explainQuizAnswer(
-        question.question,
-        question.options[index],
-        question.options[question.correctIndex],
-        isCorrect
-      );
-      setExplanation(typeof data === 'string' ? data : data.explanation || question.explanation || 'No explanation available.');
-    } catch (err) {
-      console.error(err);
-      setExplanation(question.explanation || 'No explanation available.');
+      const data = await explainQuizAnswer(question.question, question.options[index], question.options[question.correctIndex], isCorrect);
+      setExplanation(typeof data === 'string' ? data : data.explanation || question.explanation || '');
+    } catch {
+      setExplanation(question.explanation || '');
     } finally {
       setLoading(false);
     }
@@ -90,210 +80,173 @@ export default function QuizPage() {
   const finishQuiz = async () => {
     setGameState('result');
     if (user && stats.total > 0) {
-      try {
-        await submitQuizResult(user.uid, {
-          score: stats.correct,
-          totalQuestions: stats.total,
-          topic: selectedTopic || 'mixed',
-          difficulty
-        });
-      } catch (err) {
-        console.error('Failed to save score:', err);
-      }
+      submitQuizResult(user.uid, { score: stats.correct, totalQuestions: stats.total, topic: selectedTopic || 'mixed', difficulty }).catch(console.error);
     }
   };
 
+  const cardStyle = { background: 'var(--glass-bg)', backdropFilter: 'var(--glass-blur)', border: '1px solid var(--glass-border)', borderRadius: 16, boxShadow: 'var(--shadow-md)' };
+  const headerStyle = { background: 'var(--bg-elevated)', border: '1px solid var(--border-subtle)', borderRadius: 16, padding: '16px 20px' };
+
   return (
     <div className="section-container py-12 max-w-3xl">
-      <div className="text-center mb-12">
-        <motion.h1 
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="text-4xl font-display font-bold text-slate-900 dark:text-white mb-4 flex justify-center items-center gap-3"
-        >
-          <HiOutlineAcademicCap className="text-primary-500" />
+      <div style={{ textAlign: 'center', marginBottom: 48 }}>
+        <motion.h1 initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }}
+          style={{ fontSize: 'clamp(2rem, 4vw, 2.5rem)', fontWeight: 800, color: 'var(--text-primary)', marginBottom: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 12 }}>
+          <HiOutlineAcademicCap style={{ color: 'var(--accent-primary)' }} />
           Election <span className="gradient-text">Quiz</span>
         </motion.h1>
-        <motion.p 
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1 }}
-          className="text-lg text-slate-600 dark:text-slate-400"
-        >
+        <motion.p initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
+          style={{ fontSize: '1.1rem', color: 'var(--text-secondary)' }}>
           Test your civics knowledge with AI-generated questions and explanations.
         </motion.p>
       </div>
 
       <AnimatePresence mode="wait">
-        {/* SETUP STATE */}
+        {/* SETUP */}
         {gameState === 'setup' && (
-          <motion.div
-            key="setup"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            className="glass-card p-8"
-          >
-            <div className="space-y-6">
+          <motion.div key="setup" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }}
+            style={{ ...cardStyle, padding: 32 }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
               <div>
-                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                <label style={{ display: 'block', fontSize: 14, fontWeight: 500, color: 'var(--text-secondary)', marginBottom: 8 }}>
                   Select a Topic (Optional)
                 </label>
-                <select
-                  value={selectedTopic}
-                  onChange={(e) => setSelectedTopic(e.target.value)}
-                  className="w-full bg-slate-50 dark:bg-surface-dark border border-slate-200 dark:border-slate-700 rounded-xl py-3 px-4 focus:outline-none focus:ring-2 focus:ring-primary-500 appearance-none"
-                >
-                  <option value="">Surprise me (Random Topic)</option>
-                  {topics.map(t => (
-                    <option key={t} value={t}>{t.charAt(0).toUpperCase() + t.slice(1)}</option>
-                  ))}
+                <select value={selectedTopic} onChange={e => setSelectedTopic(e.target.value)}
+                  style={{ width: '100%', background: 'var(--bg-elevated)', border: '1px solid var(--border-default)', borderRadius: 12, padding: '12px 16px', color: 'var(--text-primary)', fontSize: 14, outline: 'none', cursor: 'pointer' }}>
+                  <option value="">🎲 Surprise me (Random Topic)</option>
+                  {topics.map(t => <option key={t} value={t}>{t.charAt(0).toUpperCase() + t.slice(1)}</option>)}
                 </select>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                <label style={{ display: 'block', fontSize: 14, fontWeight: 500, color: 'var(--text-secondary)', marginBottom: 8 }}>
                   Difficulty Level
                 </label>
-                <div className="grid grid-cols-3 gap-3">
-                  {['easy', 'medium', 'hard'].map(level => (
-                    <button
-                      key={level}
-                      onClick={() => setDifficulty(level)}
-                      className={`py-3 px-4 rounded-xl font-medium capitalize transition-all ${
-                        difficulty === level
-                          ? 'bg-primary-500 text-white shadow-md shadow-primary-500/30'
-                          : 'bg-slate-50 dark:bg-surface-dark border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:border-primary-300'
-                      }`}
-                    >
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12 }}>
+                  {[
+                    { level: 'easy', color: '#10b981', bg: 'rgba(16,185,129,0.1)', border: 'rgba(16,185,129,0.4)' },
+                    { level: 'medium', color: '#f59e0b', bg: 'rgba(245,158,11,0.1)', border: 'rgba(245,158,11,0.4)' },
+                    { level: 'hard', color: '#ef4444', bg: 'rgba(239,68,68,0.1)', border: 'rgba(239,68,68,0.4)' },
+                  ].map(({ level, color, bg, border }) => (
+                    <button key={level} onClick={() => setDifficulty(level)}
+                      style={{
+                        padding: '12px', borderRadius: 12, fontWeight: 600, textTransform: 'capitalize', cursor: 'pointer', transition: 'all 0.2s',
+                        background: difficulty === level ? bg : 'var(--bg-elevated)',
+                        border: `2px solid ${difficulty === level ? border : 'var(--border-default)'}`,
+                        color: difficulty === level ? color : 'var(--text-secondary)',
+                      }}>
                       {level}
                     </button>
                   ))}
                 </div>
               </div>
 
-              <div className="pt-4">
-                <button
-                  onClick={startQuiz}
-                  className="btn-primary w-full py-4 text-lg"
-                >
-                  <HiOutlineLightningBolt className="w-6 h-6" />
-                  Start Quiz
-                </button>
-              </div>
+              <button onClick={startQuiz} className="btn-primary" style={{ padding: '16px', fontSize: 16, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+                <HiOutlineLightningBolt style={{ width: 20, height: 20 }} />
+                Start Quiz
+              </button>
             </div>
           </motion.div>
         )}
 
-        {/* PLAYING STATE */}
+        {/* PLAYING */}
         {gameState === 'playing' && (
-          <motion.div
-            key="playing"
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -20 }}
-            className="space-y-6"
-          >
-            {/* Header / Stats */}
-            <div className="flex justify-between items-center bg-white dark:bg-surface-dark-elevated p-4 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700">
-              <div className="flex items-center gap-2">
-                <span className="text-sm font-medium text-slate-500 dark:text-slate-400 capitalize bg-slate-100 dark:bg-slate-800 px-3 py-1 rounded-full">
+          <motion.div key="playing" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}
+            style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+
+            {/* Stats bar */}
+            <div style={{ ...headerStyle, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <span style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-muted)', background: 'var(--bg-overlay)', padding: '4px 12px', borderRadius: 999, textTransform: 'capitalize' }}>
                   {question?.topic || selectedTopic || 'Mixed'}
                 </span>
-                <span className={`text-xs font-bold uppercase tracking-wider px-2 py-1 rounded-md ${
-                  difficulty === 'easy' ? 'text-emerald-600 bg-emerald-50 dark:bg-emerald-900/30' :
-                  difficulty === 'medium' ? 'text-amber-600 bg-amber-50 dark:bg-amber-900/30' :
-                  'text-red-600 bg-red-50 dark:bg-red-900/30'
-                }`}>
+                <span style={{
+                  fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', padding: '4px 8px', borderRadius: 6,
+                  color: difficulty === 'easy' ? '#10b981' : difficulty === 'medium' ? '#f59e0b' : '#ef4444',
+                  background: difficulty === 'easy' ? 'rgba(16,185,129,0.1)' : difficulty === 'medium' ? 'rgba(245,158,11,0.1)' : 'rgba(239,68,68,0.1)',
+                }}>
                   {difficulty}
                 </span>
               </div>
-              <div className="font-display font-bold text-lg">
-                Score: <span className="text-primary-600 dark:text-primary-400">{stats.correct}</span> / {stats.total}
+              <div style={{ fontWeight: 700, fontSize: 16, color: 'var(--text-primary)' }}>
+                Score: <span style={{ color: 'var(--accent-primary)' }}>{stats.correct}</span> / {stats.total}
               </div>
             </div>
 
             {loading && !isAnswering ? (
-              <div className="glass-card p-12 flex flex-col items-center justify-center min-h-[300px]">
-                <div className="w-12 h-12 border-4 border-primary-200 border-t-primary-500 rounded-full animate-spin mb-4"></div>
-                <p className="text-slate-500 dark:text-slate-400 animate-pulse">Generating your next question via AI...</p>
+              <div style={{ ...cardStyle, padding: 48, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: 300, gap: 16 }}>
+                <div style={{ width: 48, height: 48, border: '4px solid var(--border-default)', borderTopColor: 'var(--accent-primary)', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
+                <p style={{ color: 'var(--text-muted)', animation: 'pulse 2s infinite' }}>Generating question with AI...</p>
               </div>
             ) : error ? (
-              <div className="glass-card p-8 text-center">
-                <p className="text-red-500 mb-4">{error}</p>
+              <div style={{ ...cardStyle, padding: 32, textAlign: 'center' }}>
+                <p style={{ color: '#f87171', marginBottom: 16 }}>{error}</p>
                 <button onClick={loadNextQuestion} className="btn-secondary">Try Again</button>
               </div>
             ) : question && (
-              <div className="glass-card p-6 md:p-8 relative overflow-hidden">
-                <h2 className="text-xl md:text-2xl font-semibold text-slate-900 dark:text-white mb-8 leading-relaxed">
+              <div style={{ ...cardStyle, padding: 28 }}>
+                <h2 style={{ fontSize: '1.25rem', fontWeight: 600, color: 'var(--text-primary)', marginBottom: 28, lineHeight: 1.5 }}>
                   {question.question}
                 </h2>
 
-                <div className="space-y-3">
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                   {question.options.map((opt, idx) => {
-                    let btnClass = "quiz-option";
+                    let bg = 'var(--bg-elevated)';
+                    let border = 'var(--border-default)';
+                    let color = 'var(--text-primary)';
                     let Icon = null;
 
                     if (isAnswering) {
                       if (idx === question.correctIndex) {
-                        btnClass += " correct";
+                        bg = 'rgba(16,185,129,0.12)'; border = '#10b981'; color = '#4ade80';
                         Icon = HiOutlineCheckCircle;
                       } else if (idx === selectedOptionIndex) {
-                        btnClass += " incorrect";
+                        bg = 'rgba(239,68,68,0.12)'; border = '#ef4444'; color = '#f87171';
                         Icon = HiOutlineXCircle;
                       } else {
-                        btnClass += " opacity-50 cursor-not-allowed";
+                        bg = 'var(--bg-surface)'; color = 'var(--text-muted)';
                       }
                     }
 
                     return (
-                      <button
-                        key={idx}
-                        onClick={() => handleOptionSelect(idx)}
-                        disabled={isAnswering}
-                        className={btnClass}
-                      >
-                        <div className="flex items-center justify-between">
-                          <span className="font-medium">{opt}</span>
-                          {Icon && <Icon className="w-6 h-6 shrink-0" />}
-                        </div>
+                      <button key={idx} onClick={() => handleOptionSelect(idx)} disabled={isAnswering}
+                        style={{
+                          width: '100%', textAlign: 'left', padding: '14px 18px', borderRadius: 12,
+                          background: bg, border: `2px solid ${border}`, color,
+                          cursor: isAnswering ? 'default' : 'pointer', transition: 'all 0.2s',
+                          display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12,
+                          opacity: isAnswering && idx !== question.correctIndex && idx !== selectedOptionIndex ? 0.5 : 1,
+                        }}
+                        onMouseEnter={e => { if (!isAnswering) e.currentTarget.style.borderColor = 'var(--border-brand)'; }}
+                        onMouseLeave={e => { if (!isAnswering) e.currentTarget.style.borderColor = 'var(--border-default)'; }}>
+                        <span style={{ fontWeight: 500 }}>{opt}</span>
+                        {Icon && <Icon style={{ width: 22, height: 22, flexShrink: 0 }} />}
                       </button>
                     );
                   })}
                 </div>
 
-                {/* Explanation Area */}
                 <AnimatePresence>
                   {isAnswering && explanation && (
-                    <motion.div
-                      initial={{ opacity: 0, height: 0, marginTop: 0 }}
-                      animate={{ opacity: 1, height: 'auto', marginTop: 24 }}
-                      className="border-t border-slate-200 dark:border-slate-700 pt-6"
-                    >
-                      <h4 className="text-sm font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-2">
+                    <motion.div initial={{ opacity: 0, height: 0, marginTop: 0 }} animate={{ opacity: 1, height: 'auto', marginTop: 24 }}
+                      style={{ borderTop: '1px solid var(--border-subtle)', paddingTop: 20 }}>
+                      <h4 style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 8 }}>
                         AI Explanation
                       </h4>
-                      <p className="text-slate-700 dark:text-slate-300 leading-relaxed mb-6">
-                        {explanation}
-                      </p>
-                      <div className="flex gap-4">
-                        <button onClick={loadNextQuestion} disabled={loading} className="btn-primary flex-1">
-                          Next Question <HiOutlineChevronRight className="w-5 h-5" />
+                      <p style={{ color: 'var(--text-secondary)', lineHeight: 1.65, marginBottom: 20 }}>{explanation}</p>
+                      <div style={{ display: 'flex', gap: 12 }}>
+                        <button onClick={loadNextQuestion} disabled={loading} className="btn-primary" style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
+                          Next Question <HiOutlineChevronRight style={{ width: 18, height: 18 }} />
                         </button>
-                        <button onClick={finishQuiz} className="btn-secondary">
-                          Finish
-                        </button>
+                        <button onClick={finishQuiz} className="btn-secondary">Finish</button>
                       </div>
                     </motion.div>
                   )}
                   {isAnswering && !explanation && loading && (
-                     <motion.div
-                     initial={{ opacity: 0, height: 0 }}
-                     animate={{ opacity: 1, height: 'auto' }}
-                     className="mt-6 text-center text-slate-500 animate-pulse text-sm"
-                   >
-                     AI is typing explanation...
-                   </motion.div>
+                    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}
+                      style={{ marginTop: 16, textAlign: 'center', color: 'var(--text-muted)', fontSize: 14 }}>
+                      AI is generating explanation...
+                    </motion.div>
                   )}
                 </AnimatePresence>
               </div>
@@ -301,31 +254,20 @@ export default function QuizPage() {
           </motion.div>
         )}
 
-        {/* RESULT STATE */}
+        {/* RESULT */}
         {gameState === 'result' && (
-          <motion.div
-            key="result"
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className="glass-card p-10 text-center"
-          >
-            <div className="w-24 h-24 mx-auto bg-gradient-to-br from-primary-500 to-accent-500 rounded-full flex items-center justify-center mb-6 shadow-xl shadow-primary-500/20">
-              <HiOutlineAcademicCap className="w-12 h-12 text-white" />
+          <motion.div key="result" initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}
+            style={{ ...cardStyle, padding: 48, textAlign: 'center' }}>
+            <div style={{ width: 96, height: 96, margin: '0 auto 24px', background: 'var(--brand-gradient)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: 'var(--shadow-glow)' }}>
+              <HiOutlineAcademicCap style={{ width: 48, height: 48, color: 'white' }} />
             </div>
-            <h2 className="text-3xl font-display font-bold text-slate-900 dark:text-white mb-2">
-              Quiz Complete!
-            </h2>
-            <p className="text-slate-600 dark:text-slate-400 mb-8">
-              You scored <span className="font-bold text-primary-600 dark:text-primary-400">{stats.correct}</span> out of {stats.total}.
+            <h2 style={{ fontSize: '2rem', fontWeight: 800, color: 'var(--text-primary)', marginBottom: 8 }}>Quiz Complete!</h2>
+            <p style={{ color: 'var(--text-secondary)', marginBottom: 32, fontSize: '1.1rem' }}>
+              You scored <span style={{ fontWeight: 700, color: 'var(--accent-primary)' }}>{stats.correct}</span> out of {stats.total}.
             </p>
-
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <button 
-                onClick={() => setGameState('setup')} 
-                className="btn-primary"
-              >
-                <HiOutlineRefresh className="w-5 h-5" />
-                Play Again
+            <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
+              <button onClick={() => { setGameState('setup'); setQuestion(null); }} className="btn-primary" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <HiOutlineRefresh style={{ width: 18, height: 18 }} /> Play Again
               </button>
             </div>
           </motion.div>
