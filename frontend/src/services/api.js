@@ -11,7 +11,10 @@ async function request(endpoint, options = {}) {
 
   if (!response.ok) {
     const errorData = await response.json().catch(() => ({}));
-    throw new Error(errorData.error || `Request failed: ${response.status}`);
+    const message = errorData.error || `Request failed: ${response.status}`;
+    const err = new Error(message);
+    err.status = response.status;
+    throw err;
   }
 
   // Check if response is audio

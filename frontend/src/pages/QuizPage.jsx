@@ -27,6 +27,8 @@ export default function QuizPage() {
         setTopics(data.topics || []);
       } catch (err) {
         console.error('Failed to load topics:', err);
+        // Use fallback topics if backend unavailable
+        setTopics(['voter registration', 'election process', 'candidates', 'ballot measures', 'electoral college', 'voting rights']);
       }
     }
     loadTopics();
@@ -76,7 +78,7 @@ export default function QuizPage() {
         question.options[question.correctIndex],
         isCorrect
       );
-      setExplanation(data.explanation);
+      setExplanation(typeof data === 'string' ? data : data.explanation || question.explanation || 'No explanation available.');
     } catch (err) {
       console.error(err);
       setExplanation(question.explanation || 'No explanation available.');

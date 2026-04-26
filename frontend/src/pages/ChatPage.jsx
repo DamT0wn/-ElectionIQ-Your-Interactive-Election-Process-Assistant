@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import ReactMarkdown from 'react-markdown';
-import { HiOutlinePaperAirplane, HiOutlineMicrophone, HiOutlineStop, HiOutlineVolumeUp, HiOutlineTrash } from 'react-icons/hi';
+import { HiOutlinePaperAirplane, HiOutlineStop, HiOutlineVolumeUp, HiOutlineTrash } from 'react-icons/hi';
 import { useAuth } from '../context/AuthContext';
 import { sendMessage, getChatHistory, synthesizeSpeech } from '../services/api';
 
@@ -48,16 +48,21 @@ export default function ChatPage() {
     try {
       const response = await sendMessage(
         userMessage, 
-        newHistory.slice(0, -1), // Exclude the message we just added optimistically
+        newHistory.slice(0, -1),
         user?.uid,
         user ? 'default-session' : null
       );
-      setMessages(response.history);
+      // Backend returns { response: string, history: array }
+      if (response.history && response.history.length > 0) {
+        setMessages(response.history);
+      } else if (response.response) {
+        setMessages([...newHistory, { role: 'model', parts: [{ text: response.response }] }]);
+      }
     } catch (err) {
       console.error(err);
-      const errMsg = err.message?.includes('rate limited')
-        ? 'The AI is temporarily rate limited. Please wait a moment and try again.'
-        : 'Sorry, I encountered an error. Please try asking again.';
+      const errMsg = err.message?.includes('rate limited') || err.message?.includes('temporarily')
+        ? '⏳ The AI is temporarily rate limited. Please wait a moment and try again.'
+        : `Sorry, I encountered an error: ${err.message || 'Please try again.'}`;
       setMessages([...newHistory, { role: 'model', parts: [{ text: errMsg }] }]);
     } finally {
       setIsLoading(false);
@@ -103,17 +108,18 @@ export default function ChatPage() {
       <audio ref={audioRef} className="hidden" />
       
       {/* Header */}
-      <div className="bg-white dark:bg-surface-dark-elevated rounded-t-2xl p-4 border-b border-slate-200 dark:border-slate-700 flex justify-between items-center shadow-sm z-10">
+      <div style={{ background: 'var(--bg-elevated)', borderBottom: '1px solid var(--border-subtle)' }} className="rounded-t-2xl p-4 flex justify-between items-center shadow-sm z-10">
         <div>
-          <h1 className="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
+          <h1 style={{ color: 'var(--text-primary)' }} className="text-xl font-bold flex items-center gap-2">
             <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
             ElectionIQ Assistant
           </h1>
-          <p className="text-xs text-slate-500 dark:text-slate-400">Powered by Gemini 1.5 Pro</p>
+          <p style={{ color: 'var(--text-muted)' }} className="text-xs">Powered by Gemini 2.5 Flash</p>
         </div>
         <button 
           onClick={clearChat}
-          className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+          style={{ color: 'var(--text-muted)' }}
+          className="p-2 hover:text-red-500 rounded-lg transition-colors"
           title="Clear Chat"
         >
           <HiOutlineTrash className="w-5 h-5" />
@@ -121,12 +127,12 @@ export default function ChatPage() {
       </div>
 
       {/* Chat Area */}
-      <div className="flex-1 bg-slate-50/50 dark:bg-surface-dark/50 overflow-y-auto p-4 sm:p-6 custom-scrollbar border-x border-slate-200 dark:border-slate-700">
+      <div style={{ background: 'var(--bg-surface)', borderLeft: '1px solid var(--border-subtle)', borderRight: '1px solid var(--border-subtle)' }} className="flex-1 overflow-y-auto p-4 sm:p-6 custom-scrollbar">
         <div className="space-y-6">
           <AnimatePresence initial={false}>
             {messages.map((msg, idx) => {
               const isUser = msg.role === 'user';
-              const text = msg.parts[0].text;
+              const text = msg.parts?.[0]?.text || '';
               
               return (
                 <motion.div
@@ -137,17 +143,16 @@ export default function ChatPage() {
                 >
                   <div className={`flex items-end gap-2 max-w-[85%] sm:max-w-[75%] ${isUser ? 'flex-row-reverse' : 'flex-row'}`}>
                     {/* Avatar */}
-                    <div className={`shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold shadow-sm ${isUser ? 'bg-primary-100 text-primary-700 dark:bg-primary-900 dark:text-primary-300' : 'bg-gradient-to-br from-primary-500 to-accent-500 text-white'}`}>
+                    <div style={isUser ? { background: 'var(--bg-elevated)', color: 'var(--accent-primary)', border: '1px solid var(--border-brand)' } : { background: 'var(--brand-gradient)' }} className="shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold shadow-sm text-white">
                       {isUser ? (user?.displayName?.[0] || 'U') : 'IQ'}
                     </div>
                     
                     {/* Bubble */}
-                    <div className={`group relative p-4 rounded-2xl shadow-sm ${
-                      isUser 
-                        ? 'bg-primary-600 text-white rounded-br-sm' 
-                        : 'bg-white dark:bg-surface-dark-elevated text-slate-800 dark:text-slate-200 rounded-bl-sm border border-slate-100 dark:border-slate-700'
-                    }`}>
-                      <div className={`prose prose-sm max-w-none ${isUser ? 'prose-invert' : 'dark:prose-invert'} prose-p:leading-relaxed prose-a:text-primary-300`}>
+                    <div style={isUser
+                      ? { background: 'var(--brand-gradient)', color: 'white', borderBottomRightRadius: 4 }
+                      : { background: 'var(--bg-elevated)', color: 'var(--text-primary)', border: '1px solid var(--border-subtle)', borderBottomLeftRadius: 4 }
+                    } className="group relative p-4 rounded-2xl shadow-sm">
+                      <div className="prose prose-sm max-w-none prose-p:leading-relaxed" style={{ color: 'inherit' }}>
                         <ReactMarkdown>{text}</ReactMarkdown>
                       </div>
                       
@@ -155,7 +160,8 @@ export default function ChatPage() {
                       {!isUser && (
                         <button
                           onClick={() => handleReadAloud(text)}
-                          className="absolute -right-10 top-2 p-1.5 text-slate-400 hover:text-primary-500 bg-white dark:bg-surface-dark-elevated rounded-full shadow-sm opacity-0 group-hover:opacity-100 transition-opacity border border-slate-100 dark:border-slate-700"
+                          style={{ background: 'var(--bg-elevated)', border: '1px solid var(--border-subtle)', color: 'var(--text-muted)' }}
+                          className="absolute -right-10 top-2 p-1.5 hover:text-indigo-400 rounded-full shadow-sm opacity-0 group-hover:opacity-100 transition-opacity"
                           title="Read aloud"
                         >
                           <HiOutlineVolumeUp className="w-4 h-4" />
@@ -171,13 +177,13 @@ export default function ChatPage() {
           {/* Typing Indicator */}
           {isLoading && (
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex items-start gap-2">
-              <div className="shrink-0 w-8 h-8 rounded-full bg-gradient-to-br from-primary-500 to-accent-500 flex items-center justify-center text-white text-sm font-bold">
+              <div style={{ background: 'var(--brand-gradient)' }} className="shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-white text-sm font-bold">
                 IQ
               </div>
-              <div className="bg-white dark:bg-surface-dark-elevated rounded-2xl rounded-bl-sm p-4 border border-slate-100 dark:border-slate-700 flex gap-1">
-                <span className="w-2 h-2 rounded-full bg-primary-400 animate-typing"></span>
-                <span className="w-2 h-2 rounded-full bg-primary-400 animate-typing animate-delay-200"></span>
-                <span className="w-2 h-2 rounded-full bg-primary-400 animate-typing animate-delay-400"></span>
+              <div style={{ background: 'var(--bg-elevated)', border: '1px solid var(--border-subtle)' }} className="rounded-2xl rounded-bl-sm p-4 flex gap-1">
+                <span className="animate-typing"></span>
+                <span className="animate-typing animate-delay-200"></span>
+                <span className="animate-typing animate-delay-400"></span>
               </div>
             </motion.div>
           )}
@@ -186,7 +192,7 @@ export default function ChatPage() {
       </div>
 
       {/* Input Area */}
-      <div className="bg-white dark:bg-surface-dark-elevated rounded-b-2xl p-4 border border-slate-200 dark:border-slate-700 shadow-sm z-10">
+      <div style={{ background: 'var(--bg-elevated)', border: '1px solid var(--border-subtle)' }} className="rounded-b-2xl p-4 shadow-sm z-10">
         <form onSubmit={handleSend} className="flex gap-2 items-end">
           <div className="relative flex-1">
             <textarea
@@ -199,17 +205,10 @@ export default function ChatPage() {
                 }
               }}
               placeholder="Ask me anything about the election..."
-              className="w-full bg-slate-50 dark:bg-surface-dark border border-slate-200 dark:border-slate-600 rounded-xl py-3 px-4 pr-12 focus:outline-none focus:ring-2 focus:ring-primary-500 resize-none custom-scrollbar"
+              className="w-full rounded-xl py-3 px-4 focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none custom-scrollbar"
               rows="1"
-              style={{ minHeight: '52px', maxHeight: '120px' }}
+              style={{ minHeight: '52px', maxHeight: '120px', background: 'var(--bg-surface)', border: '1px solid var(--border-default)', color: 'var(--text-primary)' }}
             />
-            <button
-              type="button"
-              className="absolute right-3 bottom-3 p-1.5 text-slate-400 hover:text-primary-500 transition-colors"
-              title="Voice Input (Coming Soon)"
-            >
-              <HiOutlineMicrophone className="w-5 h-5" />
-            </button>
           </div>
           <button
             type="submit"
@@ -219,7 +218,7 @@ export default function ChatPage() {
             {isLoading ? <HiOutlineStop className="w-5 h-5 animate-pulse" /> : <HiOutlinePaperAirplane className="w-5 h-5 rotate-90" />}
           </button>
         </form>
-        <p className="text-center text-[10px] text-slate-400 mt-2">
+        <p style={{ color: 'var(--text-muted)' }} className="text-center text-[10px] mt-2">
           ElectionIQ can make mistakes. Verify important election dates and rules with official state sources.
         </p>
       </div>

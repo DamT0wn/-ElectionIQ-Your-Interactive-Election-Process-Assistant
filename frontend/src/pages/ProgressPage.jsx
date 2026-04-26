@@ -4,6 +4,17 @@ import { HiOutlineCheck, HiOutlineLockClosed } from 'react-icons/hi';
 import { useAuth } from '../context/AuthContext';
 import { getUserProgress, updateStepProgress, getElectionSteps } from '../services/api';
 
+const FALLBACK_STEPS = [
+  { id: 'check_eligibility', label: 'Check Eligibility', order: 1 },
+  { id: 'register_to_vote', label: 'Register to Vote', order: 2 },
+  { id: 'verify_registration', label: 'Verify Registration', order: 3 },
+  { id: 'find_polling_place', label: 'Find Polling Place', order: 4 },
+  { id: 'learn_candidates', label: 'Research Candidates & Measures', order: 5 },
+  { id: 'prepare_id', label: 'Prepare Voter ID', order: 6 },
+  { id: 'cast_vote', label: 'Cast Your Vote', order: 7 },
+  { id: 'track_ballot', label: 'Track Your Ballot', order: 8 },
+];
+
 export default function ProgressPage() {
   const { user, signInWithGoogle } = useAuth();
   const [steps, setSteps] = useState([]);
@@ -16,16 +27,18 @@ export default function ProgressPage() {
         if (!user) {
           // Load default steps without progress if not logged in
           const data = await getElectionSteps();
-          setSteps(data.steps || []);
+          setSteps(data.steps || FALLBACK_STEPS);
           setLoading(false);
           return;
         }
 
         const progressData = await getUserProgress(user.uid);
-        setSteps(progressData.steps || []);
+        setSteps(progressData.steps || FALLBACK_STEPS);
         setCompletedSteps(progressData.completedSteps || []);
       } catch (err) {
         console.error('Failed to load progress:', err);
+        // Use fallback steps if backend/Firestore unavailable
+        setSteps(FALLBACK_STEPS);
       } finally {
         setLoading(false);
       }
