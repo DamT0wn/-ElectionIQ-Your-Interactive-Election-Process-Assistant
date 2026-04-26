@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useEffect, useCallback } from 'react';
-import { initializeApp } from 'firebase/app';
+import { initializeApp, getApps } from 'firebase/app';
 import {
   getAuth,
   onAuthStateChanged,
@@ -19,19 +19,29 @@ const firebaseConfig = {
   appId: import.meta.env.VITE_FIREBASE_APP_ID,
 };
 
+// Check if Firebase is properly configured (not placeholder values)
+const isFirebaseConfigured =
+  firebaseConfig.apiKey &&
+  firebaseConfig.apiKey !== 'demo' &&
+  firebaseConfig.projectId &&
+  firebaseConfig.projectId !== 'demo-project';
+
 let app;
 let auth;
 
-try {
-  app = initializeApp(firebaseConfig);
-  auth = getAuth(app);
-} catch (err) {
-  console.warn('Firebase initialization skipped (missing config):', err.message);
+if (isFirebaseConfigured) {
+  try {
+    app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
+    auth = getAuth(app);
+  } catch (err) {
+    console.error('Firebase initialization failed:', err.message);
+  }
 }
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [authError, setAuthError] = useState(null);
 
   useEffect(() => {
     if (!auth) {
@@ -47,38 +57,56 @@ export function AuthProvider({ children }) {
 
   const signInWithGoogle = useCallback(async () => {
     if (!auth) {
-      console.warn('Firebase auth not available');
-      return null;
+      throw new Error('Firebase is not configured. Please set up your Firebase credentials.');
     }
+    setAuthError(null);
     const provider = new GoogleAuthProvider();
     provider.addScope('https://www.googleapis.com/auth/calendar.events');
+    // Force account selection every time
+    provider.setCustomParameters({ prompt: 'select_account' });
     try {
       const result = await signInWithPopup(auth, provider);
+      setUser(result.user);
       return result.user;
     } catch (err) {
-      console.error('Sign-in error:', err);
+      console.error('Sign-in error:', err.code, err.message);
+      setAuthError(err.message);
       throw err;
     }
   }, []);
 
   const signOut = useCallback(async () => {
     if (!auth) return;
-    await firebaseSignOut(auth);
-    setUser(null);
+    try {
+      await firebaseSignOut(auth);
+      setUser(null);
+    } catch (err) {
+      console.error('Sign-out error:', err);
+    }
   }, []);
 
-  // Demo mode for development without Firebase
+  // Demo mode — only used when Firebase is not configured at all
   const signInDemo = useCallback(() => {
+    if (isFirebaseConfigured) return; // Don't allow demo if Firebase is set up
     setUser({
       uid: 'demo-user-001',
       displayName: 'Demo User',
       email: 'demo@electioniq.app',
       photoURL: null,
+      isDemo: true,
     });
   }, []);
 
   return (
-    <AuthContext.Provider value={{ user, loading, signInWithGoogle, signOut, signInDemo }}>
+    <AuthContext.Provider value={{
+      user,
+      loading,
+      authError,
+      isFirebaseConfigured,
+      signInWithGoogle,
+      signOut,
+      signInDemo,
+    }}>
       {children}
     </AuthContext.Provider>
   );
