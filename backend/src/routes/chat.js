@@ -17,23 +17,17 @@ router.post(
       .trim()
       .isLength({ min: 1, max: 2000 })
       .withMessage('Message must be between 1 and 2000 characters'),
-    body('sessionId')
-      .optional({ nullable: true })
-      .isString()
-      .trim(),
-    body('userId')
-      .optional({ nullable: true })
-      .isString()
-      .trim(),
-    body('history')
-      .optional()
-      .isArray(),
+    body('sessionId').optional({ nullable: true }).isString().trim(),
+    body('userId').optional({ nullable: true }).isString().trim(),
+    body('history').optional().isArray(),
   ],
   async (req, res) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
       console.error('Validation errors:', JSON.stringify(errors.array()));
-      return res.status(400).json({ errors: errors.array(), error: errors.array()[0]?.msg || 'Validation failed' });
+      return res
+        .status(400)
+        .json({ errors: errors.array(), error: errors.array()[0]?.msg || 'Validation failed' });
     }
 
     try {
@@ -73,7 +67,7 @@ router.post(
           : 'Failed to process chat message',
       });
     }
-  }
+  },
 );
 
 /**

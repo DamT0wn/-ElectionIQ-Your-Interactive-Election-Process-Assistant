@@ -7,7 +7,10 @@ jest.mock('../services/vertexai', () => ({
     response: 'Voter registration is the process of enrolling to vote.',
     updatedHistory: [
       { role: 'user', parts: [{ text: 'What is voter registration?' }] },
-      { role: 'model', parts: [{ text: 'Voter registration is the process of enrolling to vote.' }] },
+      {
+        role: 'model',
+        parts: [{ text: 'Voter registration is the process of enrolling to vote.' }],
+      },
     ],
   }),
   generateQuizQuestion: jest.fn(),
@@ -26,16 +29,12 @@ jest.mock('../services/firestore', () => ({
 
 describe('POST /api/chat/message', () => {
   it('returns 400 when message is missing', async () => {
-    const res = await request(app)
-      .post('/api/chat/message')
-      .send({});
+    const res = await request(app).post('/api/chat/message').send({});
     expect(res.statusCode).toBe(400);
   });
 
   it('returns 400 when message is empty string', async () => {
-    const res = await request(app)
-      .post('/api/chat/message')
-      .send({ message: '' });
+    const res = await request(app).post('/api/chat/message').send({ message: '' });
     expect(res.statusCode).toBe(400);
   });
 
@@ -70,8 +69,7 @@ describe('POST /api/chat/message', () => {
 
 describe('GET /api/chat/history/:userId/:sessionId', () => {
   it('returns chat history for a user session', async () => {
-    const res = await request(app)
-      .get('/api/chat/history/user123/session456');
+    const res = await request(app).get('/api/chat/history/user123/session456');
     expect(res.statusCode).toBe(200);
     expect(res.body.history).toBeInstanceOf(Array);
   });

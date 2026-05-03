@@ -17,28 +17,32 @@ const app = express();
 const PORT = process.env.PORT || 5000;
 
 // ── Security Middleware ───────────────────────────────────────────────────────
-app.use(helmet({
-  crossOriginEmbedderPolicy: false,
-  contentSecurityPolicy: {
-    directives: {
-      defaultSrc: ["'self'"],
-      scriptSrc: ["'self'", "'unsafe-inline'"],
-      styleSrc: ["'self'", "'unsafe-inline'"],
-    }
-  }
-}));
+app.use(
+  helmet({
+    crossOriginEmbedderPolicy: false,
+    contentSecurityPolicy: {
+      directives: {
+        defaultSrc: ["'self'"],
+        scriptSrc: ["'self'", "'unsafe-inline'"],
+        styleSrc: ["'self'", "'unsafe-inline'"],
+      },
+    },
+  }),
+);
 
 // ── CORS ──────────────────────────────────────────────────────────────────────
 const corsOrigins = process.env.CORS_ORIGIN
-  ? process.env.CORS_ORIGIN.split(',').map(o => o.trim())
+  ? process.env.CORS_ORIGIN.split(',').map((o) => o.trim())
   : ['http://localhost:5173'];
 
-app.use(cors({
-  origin: corsOrigins,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
-  credentials: true,
-}));
+app.use(
+  cors({
+    origin: corsOrigins,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+    credentials: true,
+  }),
+);
 
 // ── Rate Limiting ─────────────────────────────────────────────────────────────
 const limiter = rateLimit({
@@ -86,9 +90,7 @@ app.use((err, req, res, next) => {
   console.error('Unhandled error:', err.stack);
   const status = err.status || 500;
   const message =
-    process.env.NODE_ENV === 'production'
-      ? 'An internal server error occurred'
-      : err.message;
+    process.env.NODE_ENV === 'production' ? 'An internal server error occurred' : err.message;
   res.status(status).json({ error: message });
 });
 

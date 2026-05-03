@@ -65,13 +65,27 @@ export default function FloatingChat() {
         aria-expanded={isOpen}
       >
         {isOpen ? (
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-            <line x1="18" y1="6" x2="6" y2="18"/>
-            <line x1="6" y1="6" x2="18" y2="18"/>
+          <svg
+            width="22"
+            height="22"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2.5"
+          >
+            <line x1="18" y1="6" x2="6" y2="18" />
+            <line x1="6" y1="6" x2="18" y2="18" />
           </svg>
         ) : (
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+          <svg
+            width="24"
+            height="24"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+          >
+            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
           </svg>
         )}
         {hasNewMessage && !isOpen && <span className="float-chat-badge" aria-label="New message" />}
@@ -87,7 +101,9 @@ export default function FloatingChat() {
         {/* Header */}
         <div className="float-chat-header">
           <div className="float-chat-header-info">
-            <div className="float-chat-avatar" aria-hidden="true">IQ</div>
+            <div className="float-chat-avatar" aria-hidden="true">
+              IQ
+            </div>
             <div>
               <div className="float-chat-name">ElectionIQ Assistant</div>
               <div className="float-chat-status">
@@ -103,36 +119,66 @@ export default function FloatingChat() {
               title="Open full chat"
               style={{ color: 'var(--accent-primary)', display: 'flex', alignItems: 'center' }}
             >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/>
-                <polyline points="15 3 21 3 21 9"/>
-                <line x1="10" y1="14" x2="21" y2="3"/>
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+              >
+                <path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6" />
+                <polyline points="15 3 21 3 21 9" />
+                <line x1="10" y1="14" x2="21" y2="3" />
               </svg>
             </Link>
-            <button className="float-chat-clear" onClick={clearChat} title="Clear chat" aria-label="Clear chat history">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <polyline points="3 6 5 6 21 6"/>
-                <path d="M19 6l-1 14H6L5 6"/>
+            <button
+              className="float-chat-clear"
+              onClick={clearChat}
+              title="Clear chat"
+              aria-label="Clear chat history"
+            >
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+              >
+                <polyline points="3 6 5 6 21 6" />
+                <path d="M19 6l-1 14H6L5 6" />
               </svg>
             </button>
           </div>
         </div>
 
         {/* Messages */}
-        <div className="float-chat-messages custom-scrollbar" role="log" aria-live="polite" aria-label="Chat messages">
+        <div
+          className="float-chat-messages custom-scrollbar"
+          role="log"
+          aria-live="polite"
+          aria-label="Chat messages"
+        >
           {messages.map((msg, idx) => {
             const isUser = msg.role === 'user';
             const text = msg.parts?.[0]?.text || '';
             return (
               <div key={idx} className={`float-msg ${isUser ? 'user' : 'assistant'}`}>
-                {!isUser && <div className="float-msg-avatar" aria-hidden="true">IQ</div>}
+                {!isUser && (
+                  <div className="float-msg-avatar" aria-hidden="true">
+                    IQ
+                  </div>
+                )}
                 <div className="float-msg-bubble">{text}</div>
               </div>
             );
           })}
           {isLoading && (
             <div className="float-msg assistant" aria-label="ElectionIQ is typing">
-              <div className="float-msg-avatar" aria-hidden="true">IQ</div>
+              <div className="float-msg-avatar" aria-hidden="true">
+                IQ
+              </div>
               <div className="float-msg-bubble loading">
                 <span className="animate-typing" />
                 <span className="animate-typing animate-delay-200" />
@@ -150,7 +196,7 @@ export default function FloatingChat() {
             className="float-chat-input"
             placeholder="Ask about voting..."
             value={input}
-            onChange={e => setInput(e.target.value)}
+            onChange={(e) => setInput(e.target.value)}
             onKeyDown={handleKeyDown}
             rows={1}
             disabled={isLoading}
@@ -162,9 +208,16 @@ export default function FloatingChat() {
             disabled={!input.trim() || isLoading}
             aria-label="Send message"
           >
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-              <line x1="22" y1="2" x2="11" y2="13"/>
-              <polygon points="22 2 15 22 11 13 2 9 22 2"/>
+            <svg
+              width="18"
+              height="18"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.5"
+            >
+              <line x1="22" y1="2" x2="11" y2="13" />
+              <polygon points="22 2 15 22 11 13 2 9 22 2" />
             </svg>
           </button>
         </div>

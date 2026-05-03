@@ -35,10 +35,7 @@ router.get('/topics', (req, res) => {
 router.post(
   '/generate',
   [
-    body('topic')
-      .optional()
-      .isString()
-      .trim(),
+    body('topic').optional().isString().trim(),
     body('difficulty')
       .optional()
       .isIn(['easy', 'medium', 'hard'])
@@ -60,7 +57,7 @@ router.post(
       console.error('Quiz generation error:', err);
       res.status(500).json({ error: 'Failed to generate quiz question' });
     }
-  }
+  },
 );
 
 /**
@@ -83,13 +80,18 @@ router.post(
 
     try {
       const { question, selectedAnswer, correctAnswer, isCorrect } = req.body;
-      const explanation = await explainQuizAnswer(question, selectedAnswer, correctAnswer, isCorrect);
+      const explanation = await explainQuizAnswer(
+        question,
+        selectedAnswer,
+        correctAnswer,
+        isCorrect,
+      );
       res.json({ explanation });
     } catch (err) {
       console.error('Quiz explanation error:', err);
       res.status(500).json({ error: 'Failed to generate explanation' });
     }
-  }
+  },
 );
 
 /**
@@ -119,7 +121,7 @@ router.post(
       console.error('Quiz submit error:', err);
       res.status(500).json({ error: 'Failed to save quiz result' });
     }
-  }
+  },
 );
 
 module.exports = router;

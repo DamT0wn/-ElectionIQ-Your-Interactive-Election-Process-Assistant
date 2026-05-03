@@ -23,13 +23,25 @@ const renderNavbar = () =>
 
 describe('Navbar', () => {
   it('renders the ElectionIQ logo', () => {
-    mockUseAuth.mockReturnValue({ user: null, signInWithGoogle: vi.fn(), signOut: vi.fn(), signInDemo: vi.fn(), isFirebaseConfigured: false });
+    mockUseAuth.mockReturnValue({
+      user: null,
+      signInWithGoogle: vi.fn(),
+      signOut: vi.fn(),
+      signInDemo: vi.fn(),
+      isFirebaseConfigured: false,
+    });
     renderNavbar();
     expect(screen.getByLabelText('ElectionIQ Home')).toBeInTheDocument();
   });
 
   it('renders all navigation links', () => {
-    mockUseAuth.mockReturnValue({ user: null, signInWithGoogle: vi.fn(), signOut: vi.fn(), signInDemo: vi.fn(), isFirebaseConfigured: false });
+    mockUseAuth.mockReturnValue({
+      user: null,
+      signInWithGoogle: vi.fn(),
+      signOut: vi.fn(),
+      signInDemo: vi.fn(),
+      isFirebaseConfigured: false,
+    });
     renderNavbar();
     expect(screen.getByText('Timeline')).toBeInTheDocument();
     expect(screen.getByText('AI Chat')).toBeInTheDocument();
@@ -40,13 +52,25 @@ describe('Navbar', () => {
   });
 
   it('shows Sign In button when user is not logged in', () => {
-    mockUseAuth.mockReturnValue({ user: null, signInWithGoogle: vi.fn(), signOut: vi.fn(), signInDemo: vi.fn(), isFirebaseConfigured: false });
+    mockUseAuth.mockReturnValue({
+      user: null,
+      signInWithGoogle: vi.fn(),
+      signOut: vi.fn(),
+      signInDemo: vi.fn(),
+      isFirebaseConfigured: false,
+    });
     renderNavbar();
     expect(screen.getByText('Sign In')).toBeInTheDocument();
   });
 
   it('has correct aria-label on navigation', () => {
-    mockUseAuth.mockReturnValue({ user: null, signInWithGoogle: vi.fn(), signOut: vi.fn(), signInDemo: vi.fn(), isFirebaseConfigured: false });
+    mockUseAuth.mockReturnValue({
+      user: null,
+      signInWithGoogle: vi.fn(),
+      signOut: vi.fn(),
+      signInDemo: vi.fn(),
+      isFirebaseConfigured: false,
+    });
     renderNavbar();
     expect(screen.getByRole('navigation', { name: 'Main navigation' })).toBeInTheDocument();
   });
@@ -54,7 +78,10 @@ describe('Navbar', () => {
   it('shows user display name when logged in', () => {
     mockUseAuth.mockReturnValue({
       user: { displayName: 'John Doe', email: 'john@example.com', photoURL: null, uid: '123' },
-      signInWithGoogle: vi.fn(), signOut: vi.fn(), signInDemo: vi.fn(), isFirebaseConfigured: true,
+      signInWithGoogle: vi.fn(),
+      signOut: vi.fn(),
+      signInDemo: vi.fn(),
+      isFirebaseConfigured: true,
     });
     renderNavbar();
     expect(screen.getByText('John Doe')).toBeInTheDocument();

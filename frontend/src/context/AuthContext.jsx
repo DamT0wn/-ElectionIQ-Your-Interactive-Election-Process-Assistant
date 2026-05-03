@@ -98,15 +98,17 @@ export function AuthProvider({ children }) {
   }, []);
 
   return (
-    <AuthContext.Provider value={{
-      user,
-      loading,
-      authError,
-      isFirebaseConfigured,
-      signInWithGoogle,
-      signOut,
-      signInDemo,
-    }}>
+    <AuthContext.Provider
+      value={{
+        user,
+        loading,
+        authError,
+        isFirebaseConfigured,
+        signInWithGoogle,
+        signOut,
+        signInDemo,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );

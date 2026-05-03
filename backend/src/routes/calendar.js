@@ -33,8 +33,7 @@ router.get('/events', (req, res) => {
     {
       id: 'absentee_deadline',
       title: '✉️ Absentee Ballot Request Deadline',
-      description:
-        'Deadline to request an absentee or mail-in ballot in most states.',
+      description: 'Deadline to request an absentee or mail-in ballot in most states.',
       date: `${year}-10-28`,
       endDate: `${year}-10-28`,
       color: '#a78bfa',
@@ -43,8 +42,7 @@ router.get('/events', (req, res) => {
     {
       id: 'election_day',
       title: '🇺🇸 Election Day',
-      description:
-        'The first Tuesday after the first Monday in November. Go vote!',
+      description: 'The first Tuesday after the first Monday in November. Go vote!',
       date: `${year}-11-05`,
       endDate: `${year}-11-05`,
       color: '#ef4444',
@@ -53,8 +51,7 @@ router.get('/events', (req, res) => {
     {
       id: 'results_certification',
       title: '📊 Results Certification Deadline',
-      description:
-        'States must certify their election results by this date.',
+      description: 'States must certify their election results by this date.',
       date: `${year}-12-11`,
       endDate: `${year}-12-11`,
       color: '#10b981',
@@ -63,8 +60,7 @@ router.get('/events', (req, res) => {
     {
       id: 'electoral_college',
       title: '🏛️ Electoral College Votes',
-      description:
-        'Electors in each state formally cast their votes for president.',
+      description: 'Electors in each state formally cast their votes for president.',
       date: `${year}-12-17`,
       endDate: `${year}-12-17`,
       color: '#f59e0b',
@@ -73,8 +69,7 @@ router.get('/events', (req, res) => {
     {
       id: 'inauguration',
       title: '🎉 Inauguration Day',
-      description:
-        'The new or re-elected president is sworn into office.',
+      description: 'The new or re-elected president is sworn into office.',
       date: `${year + 1}-01-20`,
       endDate: `${year + 1}-01-20`,
       color: '#3b82f6',

@@ -25,12 +25,7 @@ router.post('/transcribe', upload.single('audio'), async (req, res) => {
     const encoding = req.body.encoding || 'WEBM_OPUS';
     const sampleRate = parseInt(req.body.sampleRateHertz, 10) || 48000;
 
-    const transcript = await transcribeAudio(
-      req.file.buffer,
-      languageCode,
-      encoding,
-      sampleRate
-    );
+    const transcript = await transcribeAudio(req.file.buffer, languageCode, encoding, sampleRate);
 
     res.json({ transcript, languageCode });
   } catch (err) {
@@ -51,10 +46,7 @@ router.post(
       .trim()
       .isLength({ min: 1, max: 5000 })
       .withMessage('Text must be between 1 and 5000 characters'),
-    body('languageCode')
-      .optional()
-      .isString()
-      .trim(),
+    body('languageCode').optional().isString().trim(),
   ],
   async (req, res) => {
     const errors = validationResult(req);
@@ -77,7 +69,7 @@ router.post(
       console.error('Synthesis error:', err);
       res.status(500).json({ error: 'Failed to synthesize speech' });
     }
-  }
+  },
 );
 
 module.exports = router;

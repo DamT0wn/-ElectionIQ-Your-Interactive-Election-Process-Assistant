@@ -61,7 +61,9 @@ describe('API service', () => {
       ok: false,
       status: 500,
       headers: { get: () => 'text/html' },
-      json: async () => { throw new Error('not json'); },
+      json: async () => {
+        throw new Error('not json');
+      },
     });
 
     await expect(checkHealth()).rejects.toThrow('Request failed: 500');

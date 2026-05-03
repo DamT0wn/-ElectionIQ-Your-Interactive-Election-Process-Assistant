@@ -81,11 +81,7 @@ async function updateStepProgress(userId, stepId, completed) {
  */
 async function saveChatHistory(userId, sessionId, history) {
   const db = getDb();
-  const docRef = db
-    .collection('chatHistory')
-    .doc(userId)
-    .collection('sessions')
-    .doc(sessionId);
+  const docRef = db.collection('chatHistory').doc(userId).collection('sessions').doc(sessionId);
 
   await docRef.set({
     history,
@@ -101,11 +97,7 @@ async function saveChatHistory(userId, sessionId, history) {
  */
 async function getChatHistory(userId, sessionId) {
   const db = getDb();
-  const docRef = db
-    .collection('chatHistory')
-    .doc(userId)
-    .collection('sessions')
-    .doc(sessionId);
+  const docRef = db.collection('chatHistory').doc(userId).collection('sessions').doc(sessionId);
 
   const doc = await docRef.get();
   if (!doc.exists) return [];
@@ -119,10 +111,14 @@ async function getChatHistory(userId, sessionId) {
  */
 async function saveQuizResult(userId, result) {
   const db = getDb();
-  await db.collection('quizResults').doc(userId).collection('attempts').add({
-    ...result,
-    timestamp: new Date().toISOString(),
-  });
+  await db
+    .collection('quizResults')
+    .doc(userId)
+    .collection('attempts')
+    .add({
+      ...result,
+      timestamp: new Date().toISOString(),
+    });
 }
 
 module.exports = {

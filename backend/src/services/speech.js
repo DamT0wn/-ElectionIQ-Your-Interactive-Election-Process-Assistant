@@ -30,7 +30,7 @@ async function transcribeAudio(
   audioBuffer,
   languageCode = 'en-US',
   encoding = 'WEBM_OPUS',
-  sampleRateHertz = 48000
+  sampleRateHertz = 48000,
 ) {
   const client = getSpeechClient();
 

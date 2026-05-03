@@ -16,7 +16,7 @@ import ProgressPage from './pages/ProgressPage';
 
 export default function App() {
   console.log('App: Rendering');
-  
+
   return (
     <ThemeProvider>
       <AuthProvider>
@@ -26,13 +26,21 @@ export default function App() {
             <a
               href="#main-content"
               style={{
-                position: 'absolute', top: -40, left: 8, zIndex: 99999,
-                background: 'var(--brand-gradient)', color: 'white',
-                padding: '8px 16px', borderRadius: 8, fontWeight: 600, fontSize: 14,
-                textDecoration: 'none', transition: 'top 0.2s',
+                position: 'absolute',
+                top: -40,
+                left: 8,
+                zIndex: 99999,
+                background: 'var(--brand-gradient)',
+                color: 'white',
+                padding: '8px 16px',
+                borderRadius: 8,
+                fontWeight: 600,
+                fontSize: 14,
+                textDecoration: 'none',
+                transition: 'top 0.2s',
               }}
-              onFocus={e => e.target.style.top = '8px'}
-              onBlur={e => e.target.style.top = '-40px'}
+              onFocus={(e) => (e.target.style.top = '8px')}
+              onBlur={(e) => (e.target.style.top = '-40px')}
             >
               Skip to main content
             </a>

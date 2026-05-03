@@ -42,7 +42,7 @@ async function callGeminiModel(model, contents, generationConfig = {}) {
 
   const body = {
     system_instruction: {
-      parts: [{ text: SYSTEM_INSTRUCTION }]
+      parts: [{ text: SYSTEM_INSTRUCTION }],
     },
     contents,
     generationConfig: {
@@ -102,17 +102,16 @@ async function callGemini(contents, generationConfig = {}) {
 
   // All models exhausted
   console.error('[Gemini] All models quota exceeded.');
-  throw new Error('All Gemini models are currently rate limited. Please try again in a few minutes.');
+  throw new Error(
+    'All Gemini models are currently rate limited. Please try again in a few minutes.',
+  );
 }
 
 /**
  * Send a chat message and maintain conversation history.
  */
 async function sendChatMessage(history, userMessage) {
-  const contents = [
-    ...(history || []),
-    { role: 'user', parts: [{ text: userMessage }] },
-  ];
+  const contents = [...(history || []), { role: 'user', parts: [{ text: userMessage }] }];
 
   const responseText = await callGemini(contents);
 

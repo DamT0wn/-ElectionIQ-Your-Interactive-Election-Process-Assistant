@@ -1,6 +1,11 @@
 const express = require('express');
 const { body, validationResult } = require('express-validator');
-const { translateText, detectLanguage, getSupportedLanguages, SUPPORTED_UI_LANGUAGES } = require('../services/translation');
+const {
+  translateText,
+  detectLanguage,
+  getSupportedLanguages,
+  SUPPORTED_UI_LANGUAGES,
+} = require('../services/translation');
 
 const router = express.Router();
 
@@ -21,10 +26,7 @@ router.post(
       .trim()
       .isLength({ min: 2, max: 10 })
       .withMessage('Target language code is required'),
-    body('sourceLanguage')
-      .optional()
-      .isString()
-      .trim(),
+    body('sourceLanguage').optional().isString().trim(),
   ],
   async (req, res) => {
     const errors = validationResult(req);
@@ -40,7 +42,7 @@ router.post(
       console.error('Translation error:', err);
       res.status(500).json({ error: 'Failed to translate text' });
     }
-  }
+  },
 );
 
 /**
@@ -49,12 +51,7 @@ router.post(
  */
 router.post(
   '/detect',
-  [
-    body('text')
-      .isString()
-      .trim()
-      .isLength({ min: 1, max: 5000 }),
-  ],
+  [body('text').isString().trim().isLength({ min: 1, max: 5000 })],
   async (req, res) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
@@ -69,7 +66,7 @@ router.post(
       console.error('Language detection error:', err);
       res.status(500).json({ error: 'Failed to detect language' });
     }
-  }
+  },
 );
 
 /**
