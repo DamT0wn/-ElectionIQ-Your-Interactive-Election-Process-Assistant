@@ -1,22 +1,24 @@
-import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
-import {
-  HiOutlineChat,
-  HiOutlineMap,
-  HiOutlineCalendar,
-  HiOutlineAcademicCap,
-} from 'react-icons/hi';
 import { useAuth } from '../context/AuthContext';
+import { FEATURES } from '../constants/features';
+import { ROUTES } from '../constants/routes';
 
+/**
+ * Home page component
+ * Landing page with hero section, features grid, and CTA
+ */
 export default function HomePage() {
   const { user } = useAuth();
 
   return (
     <div className="flex flex-col min-h-[calc(100vh-4rem)]">
       {/* Hero Section */}
-      <section className="relative overflow-hidden hero-gradient text-white py-20 lg:py-32">
-        <div className="absolute inset-0 bg-black/20" />
+      <section
+        className="relative overflow-hidden hero-gradient text-white py-20 lg:py-32"
+        aria-label="Hero section"
+      >
+        <div className="absolute inset-0 bg-black/20" aria-hidden="true" />
 
         <div className="section-container relative z-10">
           <div className="max-w-3xl mx-auto text-center space-y-8">
@@ -58,14 +60,16 @@ export default function HomePage() {
               className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-4"
             >
               <Link
-                to="/timeline"
+                to={ROUTES.TIMELINE}
                 className="btn-primary w-full sm:w-auto bg-white text-primary-900 hover:bg-slate-50 shadow-white/20"
+                aria-label="Start your voter journey with the election timeline"
               >
                 Start Your Journey
               </Link>
               <Link
-                to="/chat"
+                to={ROUTES.CHAT}
                 className="btn-secondary w-full sm:w-auto bg-primary-900/40 border-primary-400/50 text-white hover:bg-primary-800/60"
+                aria-label="Ask questions to the AI assistant"
               >
                 Ask the AI Assistant
               </Link>
@@ -74,15 +78,25 @@ export default function HomePage() {
         </div>
 
         {/* Decorative elements */}
-        <div className="absolute top-1/4 left-10 w-32 h-32 bg-accent-500/30 rounded-full blur-3xl animate-float" />
-        <div className="absolute bottom-1/4 right-10 w-48 h-48 bg-blue-500/30 rounded-full blur-3xl animate-float animate-delay-200" />
+        <div
+          className="absolute top-1/4 left-10 w-32 h-32 bg-accent-500/30 rounded-full blur-3xl animate-float"
+          aria-hidden="true"
+        />
+        <div
+          className="absolute bottom-1/4 right-10 w-48 h-48 bg-blue-500/30 rounded-full blur-3xl animate-float animate-delay-200"
+          aria-hidden="true"
+        />
       </section>
 
       {/* Features Grid */}
-      <section style={{ padding: '80px 0', background: 'var(--bg-surface)' }}>
+      <section
+        style={{ padding: '80px 0', background: 'var(--bg-surface)' }}
+        aria-labelledby="features-heading"
+      >
         <div className="section-container">
           <div style={{ textAlign: 'center', maxWidth: 600, margin: '0 auto 64px' }}>
             <h2
+              id="features-heading"
               style={{
                 fontSize: 'clamp(1.75rem, 3vw, 2.25rem)',
                 fontWeight: 700,
@@ -104,47 +118,22 @@ export default function HomePage() {
               gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
               gap: 24,
             }}
+            role="list"
+            aria-label="Application features"
           >
-            {[
-              {
-                title: 'AI Chatbot',
-                desc: 'Ask any election-related question and get simple, unbiased answers.',
-                icon: HiOutlineChat,
-                link: '/chat',
-                color: '#3b82f6',
-              },
-              {
-                title: 'Interactive Timeline',
-                desc: 'Step-by-step visual guide from registration to election day.',
-                icon: HiOutlineCalendar,
-                link: '/timeline',
-                color: '#6366f1',
-              },
-              {
-                title: 'Polling Places',
-                desc: 'Find nearby polling stations and drop boxes on an interactive map.',
-                icon: HiOutlineMap,
-                link: '/map',
-                color: '#10b981',
-              },
-              {
-                title: 'Election Quiz',
-                desc: 'Test your civics knowledge with AI-generated explanations.',
-                icon: HiOutlineAcademicCap,
-                link: '/quiz',
-                color: '#f59e0b',
-              },
-            ].map((feature, idx) => (
+            {FEATURES.map((feature, idx) => (
               <motion.div
-                key={feature.title}
+                key={feature.id}
                 initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true, margin: '-100px' }}
                 transition={{ duration: 0.5, delay: idx * 0.1 }}
+                role="listitem"
               >
                 <Link
                   to={feature.link}
                   style={{ display: 'block', height: '100%', textDecoration: 'none' }}
+                  aria-label={`${feature.title}: ${feature.description}`}
                 >
                   <div className="glass-card" style={{ height: '100%', padding: 24 }}>
                     <div
@@ -160,6 +149,7 @@ export default function HomePage() {
                         marginBottom: 20,
                         boxShadow: `0 4px 12px ${feature.color}40`,
                       }}
+                      aria-hidden="true"
                     >
                       <feature.icon style={{ width: 24, height: 24 }} />
                     </div>
@@ -174,7 +164,7 @@ export default function HomePage() {
                       {feature.title}
                     </h3>
                     <p style={{ color: 'var(--text-secondary)', fontSize: 14, lineHeight: 1.6 }}>
-                      {feature.desc}
+                      {feature.description}
                     </p>
                   </div>
                 </Link>
@@ -191,6 +181,7 @@ export default function HomePage() {
           background: 'var(--bg-elevated)',
           borderTop: '1px solid var(--border-subtle)',
         }}
+        aria-labelledby="cta-heading"
       >
         <div className="section-container">
           <div
@@ -205,6 +196,7 @@ export default function HomePage() {
             }}
           >
             <h2
+              id="cta-heading"
               style={{
                 fontSize: 'clamp(1.75rem, 3vw, 2.25rem)',
                 fontWeight: 700,
@@ -226,9 +218,18 @@ export default function HomePage() {
               Create an account to track your election progress, save important dates, and keep a
               history of your AI chats.
             </p>
-            {!user && <button className="btn-primary">Sign in with Google</button>}
+            {!user && (
+              <button className="btn-primary" aria-label="Sign in with Google to get started">
+                Sign in with Google
+              </button>
+            )}
             {user && (
-              <Link to="/progress" className="btn-primary" style={{ textDecoration: 'none' }}>
+              <Link
+                to={ROUTES.PROGRESS}
+                className="btn-primary"
+                style={{ textDecoration: 'none' }}
+                aria-label="View your voter progress"
+              >
                 View Your Progress
               </Link>
             )}
